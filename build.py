@@ -9,18 +9,18 @@ def setup_icons():
     # Create icons directory if it doesn't exist
     icons_dir = Path('icons')
     icons_dir.mkdir(exist_ok=True)
-    
+
     # Ensure the logo is in the icons directory
     if not (icons_dir / 'khanbot_logo.png').exists():
         print("Please place khanbot_logo.png in the icons directory")
         sys.exit(1)
-    
+
     # Create system icon directories if they don't exist
     icon_sizes = ['16x16', '32x32', '48x48', '128x128', '256x256']
     for size in icon_sizes:
         icon_path = Path(f'~/.local/share/icons/hicolor/{size}/apps').expanduser()
         icon_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Convert and copy icon to system directory
         subprocess.run([
             'convert',
@@ -32,7 +32,7 @@ def setup_icons():
 def build_executable():
     # Install PyInstaller if not already installed
     subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"])
-    
+
     # Create the spec file
     spec_content = """
 # -*- mode: python ; coding: utf-8 -*-
@@ -88,18 +88,18 @@ exe = EXE(
     entitlements_file=None,
 )
 """
-    
+
     # Write the spec file
     with open('launcher.spec', 'w') as f:
         f.write(spec_content)
-    
+
     # Build the executable
     subprocess.run([
         "pyinstaller",
         "--clean",
         "launcher.spec"
     ])
-    
+
     print("\nBuild complete! The executable is in the 'dist' directory.")
     print("You can run it with: ./dist/khanbot")
 

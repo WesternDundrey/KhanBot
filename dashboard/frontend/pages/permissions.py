@@ -19,5 +19,3 @@ def public_pages():
         Section("Data", "💾"),
         Page("frontend/pages/data/download_candles/app.py", "Download Candles", "💹"),
     ]
-
-

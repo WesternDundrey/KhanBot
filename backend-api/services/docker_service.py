@@ -107,7 +107,7 @@ class DockerManager:
         if os.path.exists(destination_credentials_dir):
             shutil.rmtree(destination_credentials_dir)
 
-        # Copy the entire contents of source_credentials_dir to destination_credentials_dir     
+        # Copy the entire contents of source_credentials_dir to destination_credentials_dir
         shutil.copytree(source_credentials_dir, destination_credentials_dir)
         shutil.copytree(script_config_dir, destination_scripts_config_dir)
         shutil.copytree(controllers_config_dir, destination_controllers_config_dir)
