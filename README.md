@@ -44,7 +44,7 @@ Monitor and analyze your trading performance with:
 ### Development Setup
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/KhanBot.git
+git clone https://github.com/WesternDundrey/KhanBot.git
 cd KhanBot
 ```
 
@@ -113,4 +113,3 @@ For support and questions, please create an issue in the GitHub repository or co
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
