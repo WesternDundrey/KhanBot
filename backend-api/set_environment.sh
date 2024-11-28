@@ -1,17 +1,3 @@
-#!/bin/bash
-
-# Create or overwrite .env file
-echo "Setting up .env file for the project...
-By default, the current working directory will be used as the BOTS_PATH and the CONFIG_PASSWORD will be set to 'a'."
-
-# Asking for CONFIG_PASSWORD and BOTS_PATH
-CONFIG_PASSWORD=a
-USERNAME=admin
-PASSWORD=admin
-BOTS_PATH=$(pwd)
-
-# Write to .env file
-echo "CONFIG_PASSWORD=$CONFIG_PASSWORD" > .env
-echo "BOTS_PATH=$BOTS_PATH" >> .env
-echo "USERNAME=$USERNAME" >> .env
-echo "PASSWORD=$PASSWORD" >> .env
+version https://git-lfs.github.com/spec/v1
+oid sha256:e7f3eae31cb876c299fa2211330c0d828ea41294e6f86d61efe33ca498a77a27
+size 507
