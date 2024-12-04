@@ -1,0 +1,26 @@
+name: khanbot
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    # Backend API dependencies
+    - fastapi
+    - uvicorn
+    - python-multipart
+    - aiohttp
+    # Dashboard dependencies
+    - streamlit
+    - plotly
+    - pandas
+    - numpy
+    - requests
+    - python-dotenv
+    # Development tools
+    - black
+    - pytest
+    - pylint
+    # Docker SDK
+    - docker
