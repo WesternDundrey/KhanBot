@@ -2,6 +2,8 @@
 
 KhanBot is a comprehensive cryptocurrency trading automation platform that combines strategy configuration, backtesting capabilities, and performance analysis in a user-friendly interface.
 
+CURRENTLY ONLY AVAILABLE FOR MACOS AND LINUX SUBSYSTEMS
+
 ## Features
 
 KhanBot provides powerful trading capabilities through its modular architecture:
