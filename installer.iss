@@ -24,40 +24,39 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-; Main executable
+; Main executable and core directories
 Source: "dist\KhanBot.exe"; DestDir: "{app}"; Flags: ignoreversion
-
-; Backend API files
 Source: "backend-api\*"; DestDir: "{app}\backend-api"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "launch_backend.bat"; DestDir: "{app}"; Flags: ignoreversion
-
-; Dashboard files
 Source: "dashboard\*"; DestDir: "{app}\dashboard"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; WSL and launch scripts
+Source: "wsl_backend.sh"; DestDir: "{app}"; Flags: ignoreversion
+Source: "wsl_dashboard.sh"; DestDir: "{app}"; Flags: ignoreversion
+Source: "wsl_setup.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "launch_backend.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "launch_dashboard.bat"; DestDir: "{app}"; Flags: ignoreversion
-
-; Environment and setup files
-Source: "environment.yml"; DestDir: "{app}"; Flags: ignoreversion
-Source: "backup_env.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "wsl_progress.bat"; DestDir: "{app}"; Flags: ignoreversion
-
-; Main launcher files
 Source: "launch_khanbot.bat"; DestDir: "{app}"; Flags: ignoreversion
+
+; Environment configuration
+Source: "environment.yml"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{group}\Launch Backend"; Filename: "{app}\launch_backend.bat"
-Name: "{group}\Launch Dashboard"; Filename: "{app}\launch_dashboard.bat"
+Name: "{group}\Launch KhanBot"; Filename: "{app}\launch_khanbot.bat"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\backup_env.bat"; StatusMsg: "Backing up existing environment..."; Flags: runhidden waituntilterminated; Check: not WizardSilent
-Filename: "{app}\wsl_progress.bat"; StatusMsg: "Setting up WSL environment..."; Flags: runhidden waituntilterminated; Check: not WizardSilent
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Run WSL setup first
+Filename: "{app}\wsl_setup.bat"; StatusMsg: "Setting up WSL environment..."; Flags: runhidden waituntilterminated shellexec; Check: not WizardSilent
+
+; Launch option after installation
+Filename: "{app}\launch_khanbot.bat"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent shellexec
 
 [Code]
-function InitializeSetup(): Boolean;
 var
   Version: string;
+
+function InitializeSetup(): Boolean;
 begin
   Result := True;
   
@@ -68,13 +67,5 @@ begin
   begin
     MsgBox('This application requires Windows 10 or later.', mbInformation, MB_OK);
     Result := False;
-  end;
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-  if CurStep = ssPostInstall then
-  begin
-    // Add any post-installation tasks here
   end;
 end;
