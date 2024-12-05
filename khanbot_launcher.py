@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import socket
 import psutil
-import time
 
 class SingleInstanceChecker:
     def __init__(self, port=12345):
@@ -56,46 +55,40 @@ class KhanBotLauncher:
 
     def safe_start_services(self):
         try:
-            self.status_label["text"] = "Checking WSL..."
-            self.progress["value"] = 20
-            
-            # Check WSL
-            wsl_check = subprocess.run(['wsl', '--status'], capture_output=True)
-            if wsl_check.returncode != 0:
-                raise Exception("WSL is not properly installed")
-
             self.status_label["text"] = "Starting Backend Service..."
-            self.progress["value"] = 40
+            self.progress["value"] = 33
             
-            # Start backend in WSL
+            # Start backend using batch file
             backend_process = subprocess.Popen(
-                ['wsl', '-e', 'bash', '-ic', './wsl_backend.sh'],
+                ["launch_backend.bat"],
                 cwd=os.path.dirname(os.path.abspath(__file__)),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                creationflags=subprocess.CREATE_NEW_CONSOLE
             )
             self.processes.append(backend_process)
             
             # Wait for backend to initialize
-            time.sleep(5)
+            self.root.after(3000, self.start_dashboard_service)
             
+        except Exception as e:
+            self.handle_error("Failed to start backend service", e)
+
+    def start_dashboard_service(self):
+        try:
             self.status_label["text"] = "Starting Dashboard Service..."
-            self.progress["value"] = 60
+            self.progress["value"] = 66
             
-            # Start dashboard in WSL
+            # Start dashboard using batch file
             dashboard_process = subprocess.Popen(
-                ['wsl', '-e', 'bash', '-ic', './wsl_dashboard.sh'],
+                ["launch_dashboard.bat"],
                 cwd=os.path.dirname(os.path.abspath(__file__)),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                creationflags=subprocess.CREATE_NEW_CONSOLE
             )
             self.processes.append(dashboard_process)
             
-            self.progress["value"] = 80
-            self.launch_browser()
+            self.root.after(3000, self.launch_browser)
             
         except Exception as e:
-            self.handle_error("Failed to start services", e)
+            self.handle_error("Failed to start dashboard service", e)
 
     def launch_browser(self):
         try:
@@ -109,8 +102,10 @@ class KhanBotLauncher:
     def cleanup_existing_processes(self):
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
-                if ('python' in proc.name().lower() or 'wsl' in proc.name().lower()) and \
-                   any(x in str(proc.cmdline()) for x in ['backend-api', 'streamlit', 'wsl_backend.sh', 'wsl_dashboard.sh']):
+                # Look for any KhanBot related processes
+                if ('python' in proc.name().lower() or 
+                    'cmd.exe' in proc.name().lower()) and \
+                    any(x in str(proc.cmdline()) for x in ['backend-api', 'streamlit', 'launch_']):
                     proc.terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
