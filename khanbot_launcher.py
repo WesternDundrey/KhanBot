@@ -7,9 +7,11 @@ import os
 from pathlib import Path
 import socket
 import psutil
+import time
 
 class SingleInstanceChecker:
-    def __init__(self, port=12345):
+    def __init__(self, port=19999):  # Change is here - port parameter in init
+        self.port = port  # Set the port attribute first
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
     def is_running(self):
@@ -29,7 +31,7 @@ class KhanBotLauncher:
     def __init__(self, root):
         self.root = root
         self.root.title("KhanBot")
-        self.root.geometry("400x200")
+        self.root.geometry("400x300")
         self.instance_checker = SingleInstanceChecker()
         
         if self.instance_checker.is_running():
@@ -41,7 +43,7 @@ class KhanBotLauncher:
         self.setup_ui()
         self.processes = []
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.root.after(1000, self.safe_start_services)
+        self.root.after(1000, self.check_dependencies)
 
     def setup_ui(self):
         self.frame = ttk.Frame(self.root, padding="20")
@@ -50,62 +52,87 @@ class KhanBotLauncher:
         self.progress = ttk.Progressbar(self.frame, length=300, mode='determinate')
         self.progress.grid(row=1, column=0, pady=20)
         
-        self.status_label = ttk.Label(self.frame, text="Starting KhanBot...")
+        self.status_label = ttk.Label(self.frame, text="Checking dependencies...")
         self.status_label.grid(row=2, column=0)
+        
+        self.detail_label = ttk.Label(self.frame, text="", wraplength=350)
+        self.detail_label.grid(row=3, column=0, pady=10)
 
-    def safe_start_services(self):
+    def check_dependencies(self):
         try:
-            self.status_label["text"] = "Starting Backend Service..."
-            self.progress["value"] = 33
+            self.status_label["text"] = "Checking conda environment..."
+            self.progress["value"] = 10
             
-            # Start backend using batch file
+            # Check if required packages are installed
+            self.detail_label["text"] = "Checking required packages..."
+            
+            # Use current Python environment since we're already in the conda env
+            try:
+                import streamlit
+                import fastapi
+                import uvicorn
+                self.detail_label["text"] = "Required packages found"
+            except ImportError as e:
+                self.detail_label["text"] = f"Installing missing package: {str(e)}"
+                subprocess.run(['pip', 'install', 'streamlit', 'fastapi', 'uvicorn'], check=True)
+            
+            self.progress["value"] = 50
+            self.start_services()
+            
+        except Exception as e:
+            self.handle_error("Dependency check failed", e)
+
+    def start_services(self):
+        try:
+            # Start backend
+            self.status_label["text"] = "Starting Backend Service..."
+            self.progress["value"] = 70
+            
             backend_process = subprocess.Popen(
-                ["launch_backend.bat"],
-                cwd=os.path.dirname(os.path.abspath(__file__)),
-                creationflags=subprocess.CREATE_NEW_CONSOLE
+                ['bash', 'launch_backend.sh'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
             self.processes.append(backend_process)
             
             # Wait for backend to initialize
-            self.root.after(3000, self.start_dashboard_service)
+            time.sleep(3)
             
-        except Exception as e:
-            self.handle_error("Failed to start backend service", e)
-
-    def start_dashboard_service(self):
-        try:
+            # Start dashboard
             self.status_label["text"] = "Starting Dashboard Service..."
-            self.progress["value"] = 66
+            self.progress["value"] = 90
             
-            # Start dashboard using batch file
             dashboard_process = subprocess.Popen(
-                ["launch_dashboard.bat"],
-                cwd=os.path.dirname(os.path.abspath(__file__)),
-                creationflags=subprocess.CREATE_NEW_CONSOLE
+                ['bash', 'launch_dashboard.sh'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
             self.processes.append(dashboard_process)
             
-            self.root.after(3000, self.launch_browser)
+            # Wait for dashboard to initialize
+            time.sleep(3)
+            
+            # Open browser
+            self.launch_browser()
             
         except Exception as e:
-            self.handle_error("Failed to start dashboard service", e)
+            self.handle_error("Failed to start services", e)
 
     def launch_browser(self):
         try:
             self.status_label["text"] = "Opening KhanBot..."
             self.progress["value"] = 100
             webbrowser.open('http://localhost:8501')
-            self.status_label["text"] = "KhanBot is running..."
+            self.status_label["text"] = "KhanBot is running"
+            self.detail_label["text"] = "Access the dashboard at http://localhost:8501"
         except Exception as e:
             self.handle_error("Failed to open dashboard", e)
 
     def cleanup_existing_processes(self):
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
-                # Look for any KhanBot related processes
-                if ('python' in proc.name().lower() or 
-                    'cmd.exe' in proc.name().lower()) and \
-                    any(x in str(proc.cmdline()) for x in ['backend-api', 'streamlit', 'launch_']):
+                if proc.name() in ['python', 'Python'] and \
+                   any(x in str(proc.cmdline()) for x in ['backend-api', 'streamlit']):
                     proc.terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
