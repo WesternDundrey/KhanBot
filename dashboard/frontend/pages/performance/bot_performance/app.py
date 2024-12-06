@@ -14,9 +14,7 @@ from frontend.visualization.performance_etl import display_etl_section
 
 
 async def main():
-    initialize_st_page(
-        title="Bot Performance", icon="🚀", initial_sidebar_state="collapsed"
-    )
+    initialize_st_page(title="Bot Performance", icon="🚀", initial_sidebar_state="collapsed")
     st.session_state["default_config"] = {}
     backend_api = get_backend_api_client()
 
@@ -26,9 +24,7 @@ async def main():
     st.divider()
 
     st.subheader("📊 OVERVIEW")
-    display_performance_summary_table(
-        data_source.get_executors_df(), data_source.executors_with_orders
-    )
+    display_performance_summary_table(data_source.get_executors_df(), data_source.executors_with_orders)
     st.divider()
 
     st.subheader("🌎 GLOBAL RESULTS")

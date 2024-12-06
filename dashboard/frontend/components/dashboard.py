@@ -36,15 +36,15 @@ class Dashboard:
         @contextmanager
         def title_bar(self, padding="5px 15px 5px 15px", dark_switcher=True):
             with mui.Stack(
-                className=self._draggable_class,
-                alignItems="center",
-                direction="row",
-                spacing=1,
-                sx={
-                    "padding": padding,
-                    "borderBottom": 1,
-                    "borderColor": "divider",
-                },
+                    className=self._draggable_class,
+                    alignItems="center",
+                    direction="row",
+                    spacing=1,
+                    sx={
+                        "padding": padding,
+                        "borderBottom": 1,
+                        "borderColor": "divider",
+                    },
             ):
                 yield
 
@@ -52,11 +52,7 @@ class Dashboard:
                     if self._dark_mode:
                         mui.IconButton(mui.icon.DarkMode, onClick=self._switch_theme)
                     else:
-                        mui.IconButton(
-                            mui.icon.LightMode,
-                            sx={"color": "#ffc107"},
-                            onClick=self._switch_theme,
-                        )
+                        mui.IconButton(mui.icon.LightMode, sx={"color": "#ffc107"}, onClick=self._switch_theme)
 
         @abstractmethod
         def __call__(self):

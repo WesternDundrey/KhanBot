@@ -5,9 +5,7 @@ from streamlit_elements import elements, mui
 
 from frontend.components.controllers_file_explorer import ControllersFileExplorer
 from frontend.components.dashboard import Dashboard
-from frontend.components.directional_strategy_creation_card import (
-    DirectionalStrategyCreationCard,
-)
+from frontend.components.directional_strategy_creation_card import DirectionalStrategyCreationCard
 from frontend.components.editor import Editor
 from frontend.st_utils import initialize_st_page
 
@@ -42,9 +40,7 @@ for tab_name in list(ds_board.editor.tabs.keys()):
         ds_board.editor.remove_tab(tab_name)
 
 with elements("directional_strategies"):
-    with mui.Paper(
-        elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True
-    ):
+    with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
         with ds_board.dashboard():
             ds_board.create_strategy_card()
             ds_board.file_explorer()

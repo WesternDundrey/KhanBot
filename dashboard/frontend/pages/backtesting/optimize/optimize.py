@@ -10,18 +10,14 @@ from frontend.components.dashboard import Dashboard
 from frontend.components.editor import Editor
 from frontend.components.optimization_creation_card import OptimizationCreationCard
 from frontend.components.optimization_run_card import OptimizationRunCard
-from frontend.components.optimizations_file_explorer import (
-    OptimizationsStrategiesFileExplorer,
-)
+from frontend.components.optimizations_file_explorer import OptimizationsStrategiesFileExplorer
 from frontend.st_utils import initialize_st_page
 
 initialize_st_page(title="Optimize", icon="🧪")
 
 
 def run_optuna_dashboard():
-    os_utils.execute_bash_command(
-        "optuna-dashboard sqlite:///data/backtesting/backtesting_report.db"
-    )
+    os_utils.execute_bash_command("optuna-dashboard sqlite:///data/backtesting/backtesting_report.db")
     time.sleep(5)
     webbrowser.open("http://127.0.0.1:8080/dashboard", new=2)
 
@@ -51,19 +47,12 @@ for tab_name in list(op_board.editor.tabs.keys()):
         op_board.editor.remove_tab(tab_name)
 
 with elements("optimizations"):
-    with mui.Paper(
-        elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True
-    ):
+    with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
         with mui.Grid(container=True, spacing=2):
             with mui.Grid(item=True, xs=10):
                 pass
             with mui.Grid(item=True, xs=2):
-                with mui.Fab(
-                    variant="extended",
-                    color="primary",
-                    size="large",
-                    onClick=run_optuna_dashboard,
-                ):
+                with mui.Fab(variant="extended", color="primary", size="large", onClick=run_optuna_dashboard):
                     mui.Typography("Open Optuna Dashboard", variant="body1")
 
         with op_board.dashboard():

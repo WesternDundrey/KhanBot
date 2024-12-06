@@ -5,10 +5,20 @@ from frontend.st_utils import auth_system
 
 def main():
     # readme section
-    st.markdown("# Welcome to KhanBot!")
-    st.markdown(
-        "Welcome to KhanBot - Your All-in-One Trading Strategy Development Platform! KhanBot simplifies the complex world of algorithmic trading by providing an intuitive interface for designing, testing, and deploying trading strategies. Whether you're new to algorithmic trading or an experienced quant, our platform offers comprehensive backtesting capabilities that let you validate your strategies against historical data before risking real capital. With support for multiple technical indicators like MACD, Bollinger Bands, and SuperTrend, along with versatile market making strategies, KhanBot empowers traders to transform their trading ideas into well-tested, data-driven strategies. Our user-friendly dashboard provides clear visualizations of performance metrics, risk analytics, and detailed trade breakdowns, making it easier than ever to refine your trading approach."
-    )
+    st.markdown("# 📊 Hummingbot Dashboard")
+    st.markdown("Hummingbot Dashboard is an open source application that helps you create, backtest, and optimize "
+                "various types of algo trading strategies. Afterwards, you can deploy them as "
+                "[Hummingbot](http://hummingbot.org)")
+    st.write("---")
+    st.header("Watch the Hummingbot Dashboard Tutorial!")
+    st.video("https://youtu.be/7eHiMPRBQLQ?si=PAvCq0D5QDZz1h1D")
+    st.header("Feedback and issues")
+    st.write(
+        "Please give us feedback in the **#dashboard** channel of the "
+        "[hummingbot discord](https://discord.gg/hummingbot)! 🙏")
+    st.write(
+        "If you encounter any bugs or have suggestions for improvement, please create an issue in the "
+        "[hummingbot dashboard github](https://github.com/hummingbot/dashboard).")
 
 
 auth_system()

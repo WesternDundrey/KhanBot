@@ -9,11 +9,7 @@ from frontend.pages.config.utils import get_candles
 from frontend.st_utils import get_backend_api_client, initialize_st_page
 from frontend.visualization import theme
 from frontend.visualization.backtesting import create_backtesting_figure
-from frontend.visualization.backtesting_metrics import (
-    render_accuracy_metrics,
-    render_backtesting_metrics,
-    render_close_types,
-)
+from frontend.visualization.backtesting_metrics import render_accuracy_metrics, render_backtesting_metrics, render_close_types
 from frontend.visualization.candles import get_candlestick_trace
 from frontend.visualization.indicators import get_supertrend_traces, get_volume_trace
 from frontend.visualization.signals import get_supertrend_v1_signal_traces
@@ -29,41 +25,19 @@ inputs = user_inputs()
 st.session_state["default_config"].update(inputs)
 
 st.write("### Visualizing Supertrend Trading Signals")
-days_to_visualize = st.number_input(
-    "Days to Visualize", min_value=1, max_value=365, value=7
-)
+days_to_visualize = st.number_input("Days to Visualize", min_value=1, max_value=365, value=7)
 # Load candle data
-candles = get_candles(
-    connector_name=inputs["candles_connector"],
-    trading_pair=inputs["candles_trading_pair"],
-    interval=inputs["interval"],
-    days=days_to_visualize,
-)
+candles = get_candles(connector_name=inputs["candles_connector"], trading_pair=inputs["candles_trading_pair"],
+                      interval=inputs["interval"], days=days_to_visualize)
 
 # Create a subplot with 2 rows
-fig = make_subplots(
-    rows=2,
-    cols=1,
-    shared_xaxes=True,
-    vertical_spacing=0.02,
-    subplot_titles=("Candlestick with Bollinger Bands", "Volume", "MACD"),
-    row_heights=[0.8, 0.2],
-)
+fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                    vertical_spacing=0.02, subplot_titles=('Candlestick with Bollinger Bands', 'Volume', "MACD"),
+                    row_heights=[0.8, 0.2])
 add_traces_to_fig(fig, [get_candlestick_trace(candles)], row=1, col=1)
-add_traces_to_fig(
-    fig,
-    get_supertrend_traces(candles, inputs["length"], inputs["multiplier"]),
-    row=1,
-    col=1,
-)
-add_traces_to_fig(
-    fig,
-    get_supertrend_v1_signal_traces(
-        candles, inputs["length"], inputs["multiplier"], inputs["percentage_threshold"]
-    ),
-    row=1,
-    col=1,
-)
+add_traces_to_fig(fig, get_supertrend_traces(candles, inputs["length"], inputs["multiplier"]), row=1, col=1)
+add_traces_to_fig(fig, get_supertrend_v1_signal_traces(candles, inputs["length"], inputs["multiplier"],
+                                                       inputs["percentage_threshold"]), row=1, col=1)
 add_traces_to_fig(fig, [get_volume_trace(candles)], row=2, col=1)
 
 layout_settings = theme.get_default_layout()
@@ -76,8 +50,7 @@ if bt_results:
     fig = create_backtesting_figure(
         df=bt_results["processed_data"],
         executors=bt_results["executors"],
-        config=inputs,
-    )
+        config=inputs)
     c1, c2 = st.columns([0.9, 0.1])
     with c1:
         render_backtesting_metrics(bt_results["results"])
@@ -87,6 +60,4 @@ if bt_results:
         st.write("---")
         render_close_types(bt_results["results"])
 st.write("---")
-render_save_config(
-    st.session_state["default_config"]["id"], st.session_state["default_config"]
-)
+render_save_config(st.session_state["default_config"]["id"], st.session_state["default_config"])
