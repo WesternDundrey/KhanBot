@@ -10,7 +10,11 @@ def render_save_config(config_base_default: str, config_data: dict):
     config_bases = set(config_name["id"].split("_")[0] for config_name in all_configs)
     config_base = config_base_default.split("_")[0]
     if config_base in config_bases:
-        config_tag = max(float(config["id"].split("_")[-1]) for config in all_configs if config_base in config["id"])
+        config_tag = max(
+            float(config["id"].split("_")[-1])
+            for config in all_configs
+            if config_base in config["id"]
+        )
         version, tag = str(config_tag).split(".")
         config_tag = f"{version}.{int(tag) + 1}"
     else:

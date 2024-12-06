@@ -10,10 +10,10 @@ from routers import (
     manage_accounts,
     manage_backtesting,
     manage_broker_messages,
+    manage_databases,
     manage_docker,
     manage_files,
     manage_market_data,
-    manage_databases,
     manage_performance,
 )
 
@@ -32,10 +32,14 @@ def auth_user(
 ):
     current_username_bytes = credentials.username.encode("utf8")
     correct_username_bytes = f"{username}".encode("utf8")
-    is_correct_username = secrets.compare_digest(current_username_bytes, correct_username_bytes)
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
     current_password_bytes = credentials.password.encode("utf8")
     correct_password_bytes = f"{password}".encode("utf8")
-    is_correct_password = secrets.compare_digest(current_password_bytes, correct_password_bytes)
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
     if not (is_correct_username and is_correct_password) and not debug_mode:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

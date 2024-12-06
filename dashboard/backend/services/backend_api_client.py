@@ -13,6 +13,7 @@ class BackendAPIClient:
     create new Hummingbot instances, start and stop them, add new script and controller config files, and get the status
     of the active bots.
     """
+
     _shared_instance = None
 
     @classmethod
@@ -21,13 +22,24 @@ class BackendAPIClient:
             cls._shared_instance = BackendAPIClient(*args, **kwargs)
         return cls._shared_instance
 
-    def __init__(self, host: str = "localhost", port: int = 8000, username: str = "admin", password: str = "admin"):
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 8000,
+        username: str = "admin",
+        password: str = "admin",
+    ):
         self.host = host
         self.port = port
         self.base_url = f"http://{self.host}:{self.port}"
         self.auth = HTTPBasicAuth(username, password)
 
-    def post(self, endpoint: str, payload: Optional[Dict] = None, params: Optional[Dict] = None):
+    def post(
+        self,
+        endpoint: str,
+        payload: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+    ):
         """
         Post request to the backend API.
         :param params:
@@ -52,7 +64,9 @@ class BackendAPIClient:
     @staticmethod
     def _process_response(response):
         if response.status_code == 401:
-            st.error("You are not authorized to access Backend API. Please check your credentials.")
+            st.error(
+                "You are not authorized to access Backend API. Please check your credentials."
+            )
             return
         elif response.status_code == 400:
             st.error(response.json()["detail"])
@@ -89,7 +103,9 @@ class BackendAPIClient:
         endpoint = "clean-exited-containers"
         return self.post(endpoint, payload=None)
 
-    def remove_container(self, container_name: str, archive_locally: bool = True, s3_bucket: str = None):
+    def remove_container(
+        self, container_name: str, archive_locally: bool = True, s3_bucket: str = None
+    ):
         """Remove a specific container."""
         endpoint = f"remove-container/{container_name}"
         params = {"archive_locally": archive_locally}
@@ -117,11 +133,22 @@ class BackendAPIClient:
         endpoint = "start-bot"
         return self.post(endpoint, payload=start_bot_config)
 
-    def stop_bot(self, bot_name: str, skip_order_cancellation: bool = False, async_backend: bool = True):
+    def stop_bot(
+        self,
+        bot_name: str,
+        skip_order_cancellation: bool = False,
+        async_backend: bool = True,
+    ):
         """Stop a Hummingbot bot."""
         endpoint = "stop-bot"
-        return self.post(endpoint, payload={"bot_name": bot_name, "skip_order_cancellation": skip_order_cancellation,
-                                            "async_backend": async_backend})
+        return self.post(
+            endpoint,
+            payload={
+                "bot_name": bot_name,
+                "skip_order_cancellation": skip_order_cancellation,
+                "async_backend": async_backend,
+            },
+        )
 
     def import_strategy(self, strategy_config: dict):
         """Import a trading strategy to a bot."""
@@ -164,10 +191,7 @@ class BackendAPIClient:
     def add_controller_config(self, controller_config: dict):
         """Add a new controller configuration."""
         endpoint = "add-controller-config"
-        config = {
-            "name": controller_config["id"],
-            "content": controller_config
-        }
+        config = {"name": controller_config["id"], "content": controller_config}
         return self.post(endpoint, payload=config)
 
     def delete_controller_config(self, controller_name: str):
@@ -190,18 +214,27 @@ class BackendAPIClient:
         endpoint = "delete-all-script-configs"
         return self.post(endpoint)
 
-    def get_real_time_candles(self, connector: str, trading_pair: str, interval: str, max_records: int):
+    def get_real_time_candles(
+        self, connector: str, trading_pair: str, interval: str, max_records: int
+    ):
         """Get candles data."""
         endpoint = "real-time-candles"
         payload = {
             "connector": connector,
             "trading_pair": trading_pair,
             "interval": interval,
-            "max_records": max_records
+            "max_records": max_records,
         }
         return self.post(endpoint, payload=payload)
 
-    def get_historical_candles(self, connector: str, trading_pair: str, interval: str, start_time: int, end_time: int):
+    def get_historical_candles(
+        self,
+        connector: str,
+        trading_pair: str,
+        interval: str,
+        start_time: int,
+        end_time: int,
+    ):
         """Get historical candles data."""
         endpoint = "historical-candles"
         payload = {
@@ -209,11 +242,18 @@ class BackendAPIClient:
             "trading_pair": trading_pair,
             "interval": interval,
             "start_time": start_time,
-            "end_time": end_time
+            "end_time": end_time,
         }
         return self.post(endpoint, payload=payload)
 
-    def run_backtesting(self, start_time: int, end_time: int, backtesting_resolution: str, trade_cost: float, config: dict):
+    def run_backtesting(
+        self,
+        start_time: int,
+        end_time: int,
+        backtesting_resolution: str,
+        trade_cost: float,
+        config: dict,
+    ):
         """Run backtesting."""
         endpoint = "run-backtesting"
         payload = {
@@ -221,7 +261,7 @@ class BackendAPIClient:
             "end_time": end_time,
             "backtesting_resolution": backtesting_resolution,
             "trade_cost": trade_cost,
-            "config": config
+            "config": config,
         }
         backtesting_results = self.post(endpoint, payload=payload)
         if "error" in backtesting_results:
@@ -233,11 +273,14 @@ class BackendAPIClient:
         if "executors" not in backtesting_results:
             executors = []
         else:
-            executors = [ExecutorInfo(**executor) for executor in backtesting_results["executors"]]
+            executors = [
+                ExecutorInfo(**executor)
+                for executor in backtesting_results["executors"]
+            ]
         return {
             "processed_data": data,
             "executors": executors,
-            "results": backtesting_results["results"]
+            "results": backtesting_results["results"],
         }
 
     def get_all_configs_from_bot(self, bot_name: str):
@@ -282,7 +325,9 @@ class BackendAPIClient:
         endpoint = f"delete-credential/{account_name}/{connector_name}"
         return self.post(endpoint)
 
-    def add_connector_keys(self, account_name: str, connector_name: str, connector_config: dict):
+    def add_connector_keys(
+        self, account_name: str, connector_name: str, connector_config: dict
+    ):
         """Add connector keys."""
         endpoint = f"add-connector-keys/{account_name}/{connector_name}"
         return self.post(endpoint, payload=connector_config)
@@ -330,11 +375,14 @@ class BackendAPIClient:
         if "executors" not in performance_results:
             executors = []
         else:
-            executors = [ExecutorInfo(**executor) for executor in performance_results["executors"]]
+            executors = [
+                ExecutorInfo(**executor)
+                for executor in performance_results["executors"]
+            ]
         return {
             "processed_data": data,
             "executors": executors,
-            "results": performance_results["results"]
+            "results": performance_results["results"],
         }
 
     def list_databases(self):

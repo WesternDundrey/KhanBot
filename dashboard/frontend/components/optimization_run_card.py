@@ -4,7 +4,10 @@ import optuna
 from streamlit_elements import lazy, mui
 
 import constants
-from backend.utils.os_utils import get_function_from_file, get_python_files_from_directory
+from backend.utils.os_utils import (
+    get_function_from_file,
+    get_python_files_from_directory,
+)
 
 from .dashboard import Dashboard
 
@@ -22,12 +25,16 @@ class OptimizationRunCard(Dashboard.Item):
         self._number_of_trials = int(event.target.value)
 
     def _run_optimization(self):
-        study_name = self._optimization_name.split('/')[-1].split('.')[0]
-        study = optuna.create_study(direction="maximize", study_name=study_name,
-                                    storage="sqlite:///data/backtesting/backtesting_report.db",
-                                    load_if_exists=True)
-        objective = get_function_from_file(file_path=self._optimization_name,
-                                           function_name="objective")
+        study_name = self._optimization_name.split("/")[-1].split(".")[0]
+        study = optuna.create_study(
+            direction="maximize",
+            study_name=study_name,
+            storage="sqlite:///data/backtesting/backtesting_report.db",
+            load_if_exists=True,
+        )
+        objective = get_function_from_file(
+            file_path=self._optimization_name, function_name="objective"
+        )
 
         def optimization_process():
             study.optimize(objective, n_trials=self._number_of_trials)
@@ -37,15 +44,26 @@ class OptimizationRunCard(Dashboard.Item):
 
     def __call__(self):
         optimizations = get_python_files_from_directory(constants.OPTIMIZATIONS_PATH)
-        with mui.Paper(key=self._key,
-                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
-                       elevation=1):
+        with mui.Paper(
+            key=self._key,
+            sx={
+                "display": "flex",
+                "flexDirection": "column",
+                "borderRadius": 3,
+                "overflow": "hidden",
+            },
+            elevation=1,
+        ):
             with self.title_bar(padding="10px 15px 10px 15px", dark_switcher=False):
                 mui.icon.AutoFixHigh()
                 mui.Typography("Run a optimization", variant="h6")
 
             if len(optimizations) == 0:
-                mui.Alert("No optimizations available, please create one.", severity="warning", sx={"width": "100%"})
+                mui.Alert(
+                    "No optimizations available, please create one.",
+                    severity="warning",
+                    sx={"width": "100%"},
+                )
                 return
             else:
                 if self._optimization_name is None:
@@ -54,15 +72,30 @@ class OptimizationRunCard(Dashboard.Item):
                     with mui.Grid(item=True, xs=4):
                         with mui.FormControl(variant="standard", sx={"width": "100%"}):
                             mui.FormHelperText("Study name")
-                            with mui.Select(defaultValue=optimizations[0],
-                                            variant="standard", onChange=lazy(self._set_optimization_name)):
+                            with mui.Select(
+                                defaultValue=optimizations[0],
+                                variant="standard",
+                                onChange=lazy(self._set_optimization_name),
+                            ):
                                 for optimization in optimizations:
-                                    mui.MenuItem(f"{optimization.split('/')[-1].split('.')[0]}", value=optimization)
+                                    mui.MenuItem(
+                                        f"{optimization.split('/')[-1].split('.')[0]}",
+                                        value=optimization,
+                                    )
                     with mui.Grid(item=True, xs=4):
                         with mui.FormControl(variant="standard", sx={"width": "100%"}):
-                            mui.TextField(defaultValue=self._optimization_name, label="Number of trials", type="number",
-                                          variant="standard", onChange=lazy(self._set_number_of_trials))
+                            mui.TextField(
+                                defaultValue=self._optimization_name,
+                                label="Number of trials",
+                                type="number",
+                                variant="standard",
+                                onChange=lazy(self._set_number_of_trials),
+                            )
                     with mui.Grid(item=True, xs=4):
-                        with mui.Button(variant="contained", onClick=self._run_optimization, sx={"width": "100%"}):
+                        with mui.Button(
+                            variant="contained",
+                            onClick=self._run_optimization,
+                            sx={"width": "100%"},
+                        ):
                             mui.icon.PlayCircleFilled()
                             mui.Typography("Run", variant="button")

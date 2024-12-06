@@ -8,7 +8,9 @@ from hummingbot.strategy_v2.controllers.market_making_controller_base import (
     MarketMakingControllerBase,
     MarketMakingControllerConfigBase,
 )
-from hummingbot.strategy_v2.executors.position_executor.data_types import PositionExecutorConfig
+from hummingbot.strategy_v2.executors.position_executor.data_types import (
+    PositionExecutorConfig,
+)
 from pydantic import Field, validator
 
 
@@ -49,20 +51,35 @@ class PMMDynamicControllerConfig(MarketMakingControllerConfigBase):
     )
     interval: str = Field(
         default="3m",
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the candle interval (e.g., 1m, 5m, 1h, 1d): ", prompt_on_new=False),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the candle interval (e.g., 1m, 5m, 1h, 1d): ",
+            prompt_on_new=False,
+        ),
     )
 
     macd_fast: int = Field(
-        default=12, client_data=ClientFieldData(prompt=lambda mi: "Enter the MACD fast length: ", prompt_on_new=True)
+        default=12,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the MACD fast length: ", prompt_on_new=True
+        ),
     )
     macd_slow: int = Field(
-        default=26, client_data=ClientFieldData(prompt=lambda mi: "Enter the MACD slow length: ", prompt_on_new=True)
+        default=26,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the MACD slow length: ", prompt_on_new=True
+        ),
     )
     macd_signal: int = Field(
-        default=9, client_data=ClientFieldData(prompt=lambda mi: "Enter the MACD signal length: ", prompt_on_new=True)
+        default=9,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the MACD signal length: ", prompt_on_new=True
+        ),
     )
     natr_length: int = Field(
-        default=14, client_data=ClientFieldData(prompt=lambda mi: "Enter the NATR length: ", prompt_on_new=True)
+        default=14,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the NATR length: ", prompt_on_new=True
+        ),
     )
 
     @validator("candles_connector", pre=True, always=True)
@@ -86,7 +103,15 @@ class PMMDynamicController(MarketMakingControllerBase):
 
     def __init__(self, config: PMMDynamicControllerConfig, *args, **kwargs):
         self.config = config
-        self.max_records = max(config.macd_slow, config.macd_fast, config.macd_signal, config.natr_length) + 10
+        self.max_records = (
+            max(
+                config.macd_slow,
+                config.macd_fast,
+                config.macd_signal,
+                config.natr_length,
+            )
+            + 10
+        )
         if len(self.config.candles_config) == 0:
             self.config.candles_config = [
                 CandlesConfig(
@@ -105,16 +130,33 @@ class PMMDynamicController(MarketMakingControllerBase):
             interval=self.config.interval,
             max_records=self.max_records,
         )
-        natr = ta.natr(candles["high"], candles["low"], candles["close"], length=self.config.natr_length) / 100
-        macd_output = ta.macd(
-            candles["close"], fast=self.config.macd_fast, slow=self.config.macd_slow, signal=self.config.macd_signal
+        natr = (
+            ta.natr(
+                candles["high"],
+                candles["low"],
+                candles["close"],
+                length=self.config.natr_length,
+            )
+            / 100
         )
-        macd = macd_output[f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"]
+        macd_output = ta.macd(
+            candles["close"],
+            fast=self.config.macd_fast,
+            slow=self.config.macd_slow,
+            signal=self.config.macd_signal,
+        )
+        macd = macd_output[
+            f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
         macd_signal = -(macd - macd.mean()) / macd.std()
-        macdh = macd_output[f"MACDh_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"]
+        macdh = macd_output[
+            f"MACDh_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
         macdh_signal = macdh.apply(lambda x: 1 if x > 0 else -1)
         max_price_shift = natr / 2
-        price_multiplier = ((0.5 * macd_signal + 0.5 * macdh_signal) * max_price_shift).iloc[-1]
+        price_multiplier = (
+            (0.5 * macd_signal + 0.5 * macdh_signal) * max_price_shift
+        ).iloc[-1]
         candles["spread_multiplier"] = natr
         candles["reference_price"] = candles["close"] * (1 + price_multiplier)
         self.processed_data = {

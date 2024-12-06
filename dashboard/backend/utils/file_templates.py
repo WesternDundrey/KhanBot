@@ -93,8 +93,13 @@ def strategy_optimization_template(strategy_info: dict):
     strategy_config = strategy_info["config"]
     strategy_module = strategy_info["module"]
     field_schema = strategy_config.schema()["properties"]
-    fields_str = [get_optuna_suggest_str(field_name, properties) for field_name, properties in field_schema.items()]
-    fields_str = "".join([f"                    {field_str},\n" for field_str in fields_str])
+    fields_str = [
+        get_optuna_suggest_str(field_name, properties)
+        for field_name, properties in field_schema.items()
+    ]
+    fields_str = "".join(
+        [f"                    {field_str},\n" for field_str in fields_str]
+    )
     return f"""import traceback
 from decimal import Decimal
 

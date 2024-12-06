@@ -53,7 +53,9 @@ async def get_connector_config_map(connector_name: str):
 async def get_all_connectors_config_map():
     all_config_maps = {}
     for connector in list(AllConnectorSettings.get_connector_settings().keys()):
-        all_config_maps[connector] = accounts_service.get_connector_config_map(connector)
+        all_config_maps[connector] = accounts_service.get_connector_config_map(
+            connector
+        )
     return all_config_maps
 
 
@@ -99,7 +101,10 @@ async def delete_credential(account_name: str, connector_name: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.post("/add-connector-keys/{account_name}/{connector_name}", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/add-connector-keys/{account_name}/{connector_name}",
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_connector_keys(account_name: str, connector_name: str, keys: Dict):
     try:
         await accounts_service.add_connector_keys(account_name, connector_name, keys)

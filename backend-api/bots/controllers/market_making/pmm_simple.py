@@ -7,14 +7,18 @@ from hummingbot.strategy_v2.controllers.market_making_controller_base import (
     MarketMakingControllerBase,
     MarketMakingControllerConfigBase,
 )
-from hummingbot.strategy_v2.executors.position_executor.data_types import PositionExecutorConfig
+from hummingbot.strategy_v2.executors.position_executor.data_types import (
+    PositionExecutorConfig,
+)
 from pydantic import Field
 
 
 class PMMSimpleConfig(MarketMakingControllerConfigBase):
     controller_name = "pmm_simple"
     # As this controller is a simple version of the PMM, we are not using the candles feed
-    candles_config: List[CandlesConfig] = Field(default=[], client_data=ClientFieldData(prompt_on_new=False))
+    candles_config: List[CandlesConfig] = Field(
+        default=[], client_data=ClientFieldData(prompt_on_new=False)
+    )
 
 
 class PMMSimpleController(MarketMakingControllerBase):

@@ -17,13 +17,22 @@ class SuperTrendConfig(DirectionalTradingControllerConfigBase):
     candles_trading_pair: Optional[str] = Field(default=None)
     interval: str = Field(default="3m")
     length: int = Field(
-        default=20, client_data=ClientFieldData(prompt=lambda mi: "Enter the supertrend length: ", prompt_on_new=True)
+        default=20,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the supertrend length: ", prompt_on_new=True
+        ),
     )
     multiplier: float = Field(
-        default=4.0, client_data=ClientFieldData(prompt=lambda mi: "Enter the supertrend multiplier: ", prompt_on_new=True)
+        default=4.0,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the supertrend multiplier: ", prompt_on_new=True
+        ),
     )
     percentage_threshold: float = Field(
-        default=0.01, client_data=ClientFieldData(prompt=lambda mi: "Enter the percentage threshold: ", prompt_on_new=True)
+        default=0.01,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the percentage threshold: ", prompt_on_new=True
+        ),
     )
 
     @validator("candles_connector", pre=True, always=True)
@@ -62,16 +71,24 @@ class SuperTrend(DirectionalTradingControllerBase):
             max_records=self.max_records,
         )
         # Add indicators
-        df.ta.supertrend(length=self.config.length, multiplier=self.config.multiplier, append=True)
-        df["percentage_distance"] = abs(df["close"] - df[f"SUPERT_{self.config.length}_{self.config.multiplier}"]) / df["close"]
+        df.ta.supertrend(
+            length=self.config.length, multiplier=self.config.multiplier, append=True
+        )
+        df["percentage_distance"] = (
+            abs(
+                df["close"]
+                - df[f"SUPERT_{self.config.length}_{self.config.multiplier}"]
+            )
+            / df["close"]
+        )
 
         # Generate long and short conditions
-        long_condition = (df[f"SUPERTd_{self.config.length}_{self.config.multiplier}"] == 1) & (
-            df["percentage_distance"] < self.config.percentage_threshold
-        )
-        short_condition = (df[f"SUPERTd_{self.config.length}_{self.config.multiplier}"] == -1) & (
-            df["percentage_distance"] < self.config.percentage_threshold
-        )
+        long_condition = (
+            df[f"SUPERTd_{self.config.length}_{self.config.multiplier}"] == 1
+        ) & (df["percentage_distance"] < self.config.percentage_threshold)
+        short_condition = (
+            df[f"SUPERTd_{self.config.length}_{self.config.multiplier}"] == -1
+        ) & (df["percentage_distance"] < self.config.percentage_threshold)
 
         # Choose side
         df["signal"] = 0

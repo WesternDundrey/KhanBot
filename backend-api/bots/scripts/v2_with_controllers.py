@@ -11,7 +11,10 @@ from hummingbot.data_feed.candles_feed.data_types import CandlesConfig
 from hummingbot.remote_iface.mqtt import ETopicPublisher
 from hummingbot.strategy.strategy_v2_base import StrategyV2Base, StrategyV2ConfigBase
 from hummingbot.strategy_v2.models.base import RunnableStatus
-from hummingbot.strategy_v2.models.executor_actions import CreateExecutorAction, StopExecutorAction
+from hummingbot.strategy_v2.models.executor_actions import (
+    CreateExecutorAction,
+    StopExecutorAction,
+)
 from pydantic import Field
 
 
@@ -41,7 +44,11 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
     wait until the main strategy stops them.
     """
 
-    def __init__(self, connectors: Dict[str, ConnectorBase], config: GenericV2StrategyWithCashOutConfig):
+    def __init__(
+        self,
+        connectors: Dict[str, ConnectorBase],
+        config: GenericV2StrategyWithCashOutConfig,
+    ):
         super().__init__(connectors, config)
         self.config = config
         self.cashing_out = False
@@ -82,7 +89,9 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
     def on_tick(self):
         super().on_tick()
         self.performance_reports = {
-            controller_id: self.executor_orchestrator.generate_performance_report(controller_id=controller_id).dict()
+            controller_id: self.executor_orchestrator.generate_performance_report(
+                controller_id=controller_id
+            ).dict()
             for controller_id in self.controllers.keys()
         }
         self.control_rebalance()
@@ -91,7 +100,11 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
         self.send_performance_report()
 
     def control_rebalance(self):
-        if self.rebalance_interval and self._last_rebalance_check_timestamp + self.rebalance_interval <= self.current_timestamp:
+        if (
+            self.rebalance_interval
+            and self._last_rebalance_check_timestamp + self.rebalance_interval
+            <= self.current_timestamp
+        ):
             balance_required = {}
             for controller_id, controller in self.controllers.items():
                 connector_name = controller.config.dict().get("connector_name")
@@ -114,7 +127,9 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
                     trading_pair = f"{token}-{self.config.asset_to_rebalance}"
                     mid_price = connector.get_mid_price(trading_pair)
                     trading_rule = connector.trading_rules[trading_pair]
-                    amount_with_safe_margin = amount * (1 + Decimal(self.config.extra_inventory))
+                    amount_with_safe_margin = amount * (
+                        1 + Decimal(self.config.extra_inventory)
+                    )
                     active_executors_for_pair = self.filter_executors(
                         executors=self.get_all_executors(),
                         filter_func=lambda x: x.is_active
@@ -128,15 +143,21 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
                             if executor.side == TradeType.SELL
                         ]
                     ) - sum(
-                        [executor.filled_amount_quote for executor in active_executors_for_pair if executor.side == TradeType.BUY]
+                        [
+                            executor.filled_amount_quote
+                            for executor in active_executors_for_pair
+                            if executor.side == TradeType.BUY
+                        ]
                     )
                     balance += unmatched_amount / mid_price
                     base_balance_diff = balance - amount_with_safe_margin
                     abs_balance_diff = abs(base_balance_diff)
                     trading_rules_condition = (
                         abs_balance_diff > trading_rule.min_order_size
-                        and abs_balance_diff * mid_price > trading_rule.min_notional_size
-                        and abs_balance_diff * mid_price > self.config.min_amount_to_rebalance_usd
+                        and abs_balance_diff * mid_price
+                        > trading_rule.min_notional_size
+                        and abs_balance_diff * mid_price
+                        > self.config.min_amount_to_rebalance_usd
                     )
                     order_type = OrderType.MARKET
                     if base_balance_diff > 0:
@@ -147,10 +168,15 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
                                 f"Executors unmatched balance {unmatched_amount / mid_price}"
                             )
                             connector.sell(
-                                trading_pair=trading_pair, amount=abs_balance_diff, order_type=order_type, price=mid_price
+                                trading_pair=trading_pair,
+                                amount=abs_balance_diff,
+                                order_type=order_type,
+                                price=mid_price,
                             )
                         else:
-                            self.logger().info("Skipping rebalance due a low amount to sell that may cause future imbalance")
+                            self.logger().info(
+                                "Skipping rebalance due a low amount to sell that may cause future imbalance"
+                            )
                     else:
                         if not trading_rules_condition:
                             amount = max(
@@ -171,7 +197,12 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
                                 f"Rebalance: Buying {amount} {token} to {self.config.asset_to_rebalance}. "
                                 f"Balance: {balance} | Executors unmatched balance {unmatched_amount}"
                             )
-                        connector.buy(trading_pair=trading_pair, amount=amount, order_type=order_type, price=mid_price)
+                        connector.buy(
+                            trading_pair=trading_pair,
+                            amount=amount,
+                            order_type=order_type,
+                            price=mid_price,
+                        )
             self._last_rebalance_check_timestamp = self.current_timestamp
 
     def control_max_drawdown(self):
@@ -189,7 +220,9 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
             else:
                 current_drawdown = last_max_pnl - controller_pnl
                 if current_drawdown > self.config.max_controller_drawdown:
-                    self.logger().info(f"Controller {controller_id} reached max drawdown. Stopping the controller.")
+                    self.logger().info(
+                        f"Controller {controller_id} reached max drawdown. Stopping the controller."
+                    )
                     controller.stop()
                     executors_order_placed = self.filter_executors(
                         executors=self.executors_info[controller_id],
@@ -197,14 +230,18 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
                     )
                     self.executor_orchestrator.execute_actions(
                         actions=[
-                            StopExecutorAction(controller_id=controller_id, executor_id=executor.id)
+                            StopExecutorAction(
+                                controller_id=controller_id, executor_id=executor.id
+                            )
                             for executor in executors_order_placed
                         ]
                     )
                     self.drawdown_exited_controllers.append(controller_id)
 
     def check_max_global_drawdown(self):
-        current_global_pnl = sum([report["global_pnl_quote"] for report in self.performance_reports.values()])
+        current_global_pnl = sum(
+            [report["global_pnl_quote"] for report in self.performance_reports.values()]
+        )
         if current_global_pnl > self.max_global_pnl:
             self.max_global_pnl = current_global_pnl
         else:
@@ -216,7 +253,8 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
 
     def send_performance_report(self):
         if (
-            self.current_timestamp - self._last_performance_report_timestamp >= self.performance_report_interval
+            self.current_timestamp - self._last_performance_report_timestamp
+            >= self.performance_report_interval
             and self.mqtt_enabled
         ):
             self._pub(self.performance_reports)
@@ -230,7 +268,11 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
             self.check_manual_cash_out()
 
     def evaluate_cash_out_time(self):
-        if self.cash_out_time and self.current_timestamp >= self.cash_out_time and not self.cashing_out:
+        if (
+            self.cash_out_time
+            and self.current_timestamp >= self.cash_out_time
+            and not self.cashing_out
+        ):
             self.logger().info("Cash out time reached. Stopping the controllers.")
             for controller_id, controller in self.controllers.items():
                 if controller.status == RunnableStatus.RUNNING:
@@ -240,17 +282,26 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
 
     def check_manual_cash_out(self):
         for controller_id, controller in self.controllers.items():
-            if controller.config.manual_kill_switch and controller.status == RunnableStatus.RUNNING:
+            if (
+                controller.config.manual_kill_switch
+                and controller.status == RunnableStatus.RUNNING
+            ):
                 self.logger().info(f"Manual cash out for controller {controller_id}.")
                 controller.stop()
                 executors_to_stop = self.get_executors_by_controller(controller_id)
                 self.executor_orchestrator.execute_actions(
                     [
-                        StopExecutorAction(executor_id=executor.id, controller_id=executor.controller_id)
+                        StopExecutorAction(
+                            executor_id=executor.id,
+                            controller_id=executor.controller_id,
+                        )
                         for executor in executors_to_stop
                     ]
                 )
-            if not controller.config.manual_kill_switch and controller.status == RunnableStatus.TERMINATED:
+            if (
+                not controller.config.manual_kill_switch
+                and controller.status == RunnableStatus.TERMINATED
+            ):
                 if controller_id in self.drawdown_exited_controllers:
                     continue
                 self.logger().info(f"Restarting controller {controller_id}.")
@@ -258,18 +309,24 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
 
     def check_executors_status(self):
         active_executors = self.filter_executors(
-            executors=self.get_all_executors(), filter_func=lambda executor: executor.status == RunnableStatus.RUNNING
+            executors=self.get_all_executors(),
+            filter_func=lambda executor: executor.status == RunnableStatus.RUNNING,
         )
         if not active_executors:
-            self.logger().info("All executors have finalized their execution. Stopping the strategy.")
+            self.logger().info(
+                "All executors have finalized their execution. Stopping the strategy."
+            )
             HummingbotApplication.main_application().stop()
         else:
             non_trading_executors = self.filter_executors(
-                executors=active_executors, filter_func=lambda executor: not executor.is_trading
+                executors=active_executors,
+                filter_func=lambda executor: not executor.is_trading,
             )
             self.executor_orchestrator.execute_actions(
                 [
-                    StopExecutorAction(executor_id=executor.id, controller_id=executor.controller_id)
+                    StopExecutorAction(
+                        executor_id=executor.id, controller_id=executor.controller_id
+                    )
                     for executor in non_trading_executors
                 ]
             )
@@ -288,10 +345,13 @@ class GenericV2StrategyWithCashOut(StrategyV2Base):
             if "connector_name" in config_dict:
                 if self.is_perpetual(config_dict["connector_name"]):
                     if "position_mode" in config_dict:
-                        connectors_position_mode[config_dict["connector_name"]] = config_dict["position_mode"]
+                        connectors_position_mode[config_dict["connector_name"]] = (
+                            config_dict["position_mode"]
+                        )
                     if "leverage" in config_dict:
                         self.connectors[config_dict["connector_name"]].set_leverage(
-                            leverage=config_dict["leverage"], trading_pair=config_dict["trading_pair"]
+                            leverage=config_dict["leverage"],
+                            trading_pair=config_dict["trading_pair"],
                         )
         for connector_name, position_mode in connectors_position_mode.items():
             self.connectors[connector_name].set_position_mode(position_mode)

@@ -8,7 +8,11 @@ from typing import Optional
 from fastapi import HTTPException
 from hummingbot.client.config.client_config_map import ClientConfigMap
 from hummingbot.client.config.config_crypt import ETHKeyFileSecretManger
-from hummingbot.client.config.config_helpers import ClientConfigAdapter, ReadOnlyClientConfigAdapter, get_connector_class
+from hummingbot.client.config.config_helpers import (
+    ClientConfigAdapter,
+    ReadOnlyClientConfigAdapter,
+    get_connector_class,
+)
 from hummingbot.client.settings import AllConnectorSettings
 
 from config import BANNED_TOKENS, CONFIG_PASSWORD
@@ -57,8 +61,12 @@ class AccountsService:
         Start the loop that updates the balances of all the accounts at a fixed interval.
         :return:
         """
-        self._update_account_state_task = asyncio.create_task(self.update_account_state_loop())
-        self._dump_account_state_task = asyncio.create_task(self.dump_account_state_loop())
+        self._update_account_state_task = asyncio.create_task(
+            self.update_account_state_loop()
+        )
+        self._dump_account_state_task = asyncio.create_task(
+            self.dump_account_state_loop()
+        )
 
     def stop_update_account_state_loop(self):
         """
@@ -101,8 +109,12 @@ class AccountsService:
                 logging.error(f"Error dumping account state: {e}")
             finally:
                 now = datetime.now()
-                next_log_time = (now + timedelta(minutes=self.account_history_dump_interval)).replace(second=0, microsecond=0)
-                next_log_time = next_log_time - timedelta(minutes=next_log_time.minute % self.account_history_dump_interval)
+                next_log_time = (
+                    now + timedelta(minutes=self.account_history_dump_interval)
+                ).replace(second=0, microsecond=0)
+                next_log_time = next_log_time - timedelta(
+                    minutes=next_log_time.minute % self.account_history_dump_interval
+                )
                 sleep_duration = (next_log_time - now).total_seconds()
                 await asyncio.sleep(sleep_duration)
 
@@ -114,9 +126,17 @@ class AccountsService:
         timestamp = datetime.now().isoformat()
         state_to_dump = {"timestamp": timestamp, "state": self.accounts_state}
         if not file_system.path_exists(path=f"data/{self.history_file}"):
-            file_system.add_file(directory="data", file_name=self.history_file, content=json.dumps(state_to_dump) + "\n")
+            file_system.add_file(
+                directory="data",
+                file_name=self.history_file,
+                content=json.dumps(state_to_dump) + "\n",
+            )
         else:
-            file_system.append_to_file(directory="data", file_name=self.history_file, content=json.dumps(state_to_dump) + "\n")
+            file_system.append_to_file(
+                directory="data",
+                file_name=self.history_file,
+                content=json.dumps(state_to_dump) + "\n",
+            )
 
     def load_account_state_history(self):
         """
@@ -142,7 +162,10 @@ class AccountsService:
             for connector_name in self.list_credentials(account_name):
                 try:
                     connector_name = connector_name.split(".")[0]
-                    if account_name not in self.accounts or connector_name not in self.accounts[account_name]:
+                    if (
+                        account_name not in self.accounts
+                        or connector_name not in self.accounts[account_name]
+                    ):
                         self.initialize_connector(account_name, connector_name)
                 except Exception as e:
                     logging.error(f"Error initializing connector {connector_name}: {e}")
@@ -201,7 +224,9 @@ class AccountsService:
         try:
             await connector_instance._update_balances()
         except Exception as e:
-            logging.error(f"Error updating balances for connector {connector_instance}: {e}")
+            logging.error(
+                f"Error updating balances for connector {connector_instance}: {e}"
+            )
 
     async def update_trading_rules(self):
         tasks = []
@@ -214,7 +239,9 @@ class AccountsService:
         try:
             await connector_instance._update_trading_rules()
         except Exception as e:
-            logging.error(f"Error updating trading rules for connector {connector_instance}: {e}")
+            logging.error(
+                f"Error updating trading rules for connector {connector_instance}: {e}"
+            )
 
     async def update_account_state(self):
         for account_name, connectors in self.accounts.items():
@@ -229,8 +256,14 @@ class AccountsService:
                         if value != Decimal("0") and key not in BANNED_TOKENS
                     ]
                     unique_tokens = [balance["token"] for balance in balances]
-                    trading_pairs = [self.get_default_market(token) for token in unique_tokens if "USD" not in token]
-                    last_traded_prices = await self._safe_get_last_traded_prices(connector, trading_pairs)
+                    trading_pairs = [
+                        self.get_default_market(token)
+                        for token in unique_tokens
+                        if "USD" not in token
+                    ]
+                    last_traded_prices = await self._safe_get_last_traded_prices(
+                        connector, trading_pairs
+                    )
                     for balance in balances:
                         token = balance["token"]
                         if "USD" in token:
@@ -244,26 +277,39 @@ class AccountsService:
                                 "units": float(balance["units"]),
                                 "price": float(price),
                                 "value": float(price * balance["units"]),
-                                "available_units": float(connector.get_available_balance(balance["token"])),
+                                "available_units": float(
+                                    connector.get_available_balance(balance["token"])
+                                ),
                             }
                         )
                     self.account_state_update_event.set()
                 except Exception as e:
-                    logging.error(f"Error updating balances for connector {connector_name} in account {account_name}: {e}")
+                    logging.error(
+                        f"Error updating balances for connector {connector_name} in account {account_name}: {e}"
+                    )
                 self.accounts_state[account_name][connector_name] = tokens_info
 
     async def _safe_get_last_traded_prices(self, connector, trading_pairs, timeout=5):
         try:
             # TODO: Fix OKX connector to return the markets in Hummingbot format.
-            last_traded = await asyncio.wait_for(connector.get_last_traded_prices(trading_pairs=trading_pairs), timeout=timeout)
+            last_traded = await asyncio.wait_for(
+                connector.get_last_traded_prices(trading_pairs=trading_pairs),
+                timeout=timeout,
+            )
             if connector.name == "okx_perpetual":
-                return {pair.strip("-SWAP"): value for pair, value in last_traded.items()}
+                return {
+                    pair.strip("-SWAP"): value for pair, value in last_traded.items()
+                }
             return last_traded
         except asyncio.TimeoutError:
-            logging.error(f"Timeout getting last traded prices for trading pairs {trading_pairs}")
+            logging.error(
+                f"Timeout getting last traded prices for trading pairs {trading_pairs}"
+            )
             return {pair: Decimal("0") for pair in trading_pairs}
         except Exception as e:
-            logging.error(f"Error getting last traded prices in connector {connector} for trading pairs {trading_pairs}: {e}")
+            logging.error(
+                f"Error getting last traded prices in connector {connector} for trading pairs {trading_pairs}: {e}"
+            )
             return {pair: Decimal("0") for pair in trading_pairs}
 
     @staticmethod
@@ -273,12 +319,24 @@ class AccountsService:
         :param connector_name: The name of the connector.
         :return: The connector config map.
         """
-        connector_config = BackendAPIConfigAdapter(AllConnectorSettings.get_connector_config_keys(connector_name))
-        return [key for key in connector_config.hb_config.__fields__.keys() if key != "connector"]
+        connector_config = BackendAPIConfigAdapter(
+            AllConnectorSettings.get_connector_config_keys(connector_name)
+        )
+        return [
+            key
+            for key in connector_config.hb_config.__fields__.keys()
+            if key != "connector"
+        ]
 
-    async def add_connector_keys(self, account_name: str, connector_name: str, keys: dict):
-        BackendAPISecurity.login_account(account_name=account_name, secrets_manager=self.secrets_manager)
-        connector_config = BackendAPIConfigAdapter(AllConnectorSettings.get_connector_config_keys(connector_name))
+    async def add_connector_keys(
+        self, account_name: str, connector_name: str, keys: dict
+    ):
+        BackendAPISecurity.login_account(
+            account_name=account_name, secrets_manager=self.secrets_manager
+        )
+        connector_config = BackendAPIConfigAdapter(
+            AllConnectorSettings.get_connector_config_keys(connector_name)
+        )
         for key, value in keys.items():
             setattr(connector_config, key, value)
         BackendAPISecurity.update_connector_keys(account_name, connector_config)
@@ -295,7 +353,9 @@ class AccountsService:
         :param connector_name: The name of the connector.
         :return: The connector object.
         """
-        BackendAPISecurity.login_account(account_name=account_name, secrets_manager=self.secrets_manager)
+        BackendAPISecurity.login_account(
+            account_name=account_name, secrets_manager=self.secrets_manager
+        )
         client_config_map = ClientConfigAdapter(ClientConfigMap())
         conn_setting = AllConnectorSettings.get_connector_settings()[connector_name]
         keys = BackendAPISecurity.api_keys(connector_name)
@@ -325,7 +385,13 @@ class AccountsService:
         :return: List of credentials.
         """
         try:
-            return [file for file in file_system.list_files(f"credentials/{account_name}/connectors") if file.endswith(".yml")]
+            return [
+                file
+                for file in file_system.list_files(
+                    f"credentials/{account_name}/connectors"
+                )
+                if file.endswith(".yml")
+            ]
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
 
@@ -336,8 +402,13 @@ class AccountsService:
         :param connector_name:
         :return:
         """
-        if file_system.path_exists(f"credentials/{account_name}/connectors/{connector_name}.yml"):
-            file_system.delete_file(directory=f"credentials/{account_name}/connectors", file_name=f"{connector_name}.yml")
+        if file_system.path_exists(
+            f"credentials/{account_name}/connectors/{connector_name}.yml"
+        ):
+            file_system.delete_file(
+                directory=f"credentials/{account_name}/connectors",
+                file_name=f"{connector_name}.yml",
+            )
             if connector_name in self.accounts[account_name]:
                 self.accounts[account_name].pop(connector_name)
             if connector_name in self.accounts_state[account_name]:
@@ -351,11 +422,19 @@ class AccountsService:
         """
         if account_name in self.accounts:
             raise HTTPException(status_code=400, detail="Account already exists.")
-        files_to_copy = ["conf_client.yml", "conf_fee_overrides.yml", "hummingbot_logs.yml", ".password_verification"]
+        files_to_copy = [
+            "conf_client.yml",
+            "conf_fee_overrides.yml",
+            "hummingbot_logs.yml",
+            ".password_verification",
+        ]
         file_system.create_folder("credentials", account_name)
         file_system.create_folder(f"credentials/{account_name}", "connectors")
         for file in files_to_copy:
-            file_system.copy_file(f"credentials/master_account/{file}", f"credentials/{account_name}/{file}")
+            file_system.copy_file(
+                f"credentials/master_account/{file}",
+                f"credentials/{account_name}/{file}",
+            )
         self.accounts[account_name] = {}
         self.accounts_state[account_name] = {}
 
