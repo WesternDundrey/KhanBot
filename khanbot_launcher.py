@@ -1,62 +1,58 @@
 import subprocess
+import os
 import time
-import sys
-import requests
-from pathlib import Path
+import webbrowser
 
-def wait_for_backend(max_attempts=30):
-    """Check if backend API is responding"""
-    print("Waiting for backend to start...")
-    attempts = 0
-    while attempts < max_attempts:
-        try:
-            response = requests.get('http://localhost:8000/health')
-            if response.status_code == 200:
-                print("Backend is ready!")
-                return True
-        except requests.exceptions.ConnectionError:
-            pass
-        attempts += 1
-        time.sleep(1)
-    return False
 
 def main():
-    # Start backend with Unicorn
-    backend_path = Path("backend-api/main.py")
-    if not backend_path.exists():
-        print("Error: Cannot find backend API file")
-        return
-
-    print("Starting backend API...")
-    backend_process = subprocess.Popen([
-        "uvicorn", 
-        "backend-api.main:app", 
-        "--host", "0.0.0.0", 
-        "--port", "8000"
-    ])
-
-    # Wait for backend to be ready
-    if not wait_for_backend():
-        print("Error: Backend failed to start")
-        backend_process.terminate()
-        return
-
-    # Start Streamlit dashboard
-    print("Starting dashboard...")
-    dashboard_process = subprocess.Popen([
-        "streamlit", 
-        "run", 
-        "dashboard/main.py"
-    ])
-
     try:
-        # Keep the script running
-        backend_process.wait()
-        dashboard_process.wait()
+        # Start backend from backend-api environment
+        print("Starting backend API...")
+        os.chdir("backend-api")
+        
+        # Run uvicorn directly in the backend-api environment
+        backend_process = subprocess.Popen(
+            ["conda", "run", "-n", "backend-api", "uvicorn", "main:app", "--reload"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        os.chdir("..")  # Move back to the root directory
+        
+        # Start dashboard from dashboard environment
+        print("Starting dashboard...")
+        os.chdir("dashboard")
+        
+        dashboard_process = subprocess.Popen(
+            ["conda", "run", "-n", "dashboard", "make", "run"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        # Open the dashboard after a short delay to allow startup
+        time.sleep(10)
+        webbrowser.open("http://localhost:8501")
+        print("Dashboard is available at http://localhost:8501")
+        
+        # Keep the script running and display output
+        while True:
+            backend_output = backend_process.stdout.readline()
+            if backend_output:
+                print(f"[Backend] {backend_output.strip()}")
+                
+            dashboard_output = dashboard_process.stdout.readline()
+            if dashboard_output:
+                print(f"[Dashboard] {dashboard_output.strip()}")
+                
     except KeyboardInterrupt:
         print("\nShutting down services...")
         backend_process.terminate()
         dashboard_process.terminate()
+    finally:
+        os.chdir("..")
+
 
 if __name__ == "__main__":
     main()
