@@ -10,7 +10,7 @@ from st_pages import add_page_title, show_pages
 from yaml import SafeLoader
 
 from CONFIG import AUTH_SYSTEM_ENABLED
-from frontend.pages.permissions import main_page, private_pages, public_pages
+from frontend.pages.permissions import main_page, public_pages
 
 
 def initialize_st_page(
@@ -101,7 +101,7 @@ def get_backend_api_client():
 
 def auth_system():
     if not AUTH_SYSTEM_ENABLED:
-        show_pages(main_page() + private_pages() + public_pages())
+        show_pages(main_page() + public_pages())
     else:
         with open("credentials.yml") as file:
             config = yaml.load(file, Loader=SafeLoader)
@@ -125,4 +125,4 @@ def auth_system():
         else:
             st.session_state.authenticator.logout(location="sidebar")
             st.sidebar.write(f'Welcome *{st.session_state["name"]}*')
-            show_pages(main_page() + private_pages() + public_pages())
+            show_pages(main_page() + pages() + public_pages())
