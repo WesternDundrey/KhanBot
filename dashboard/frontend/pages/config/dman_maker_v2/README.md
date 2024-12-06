@@ -1,6 +1,6 @@
-#Configuration Tool
+# D-Man Maker V2 Configuration Tool
 
-Welcome to Configuration Tool! This tool allows you to create, modify, visualize, backtest, and save configurations for the D-Man Maker V2 trading strategy. Here’s how you can make the most out of it.
+Welcome to the D-Man Maker V2 Configuration Tool! This tool allows you to create, modify, visualize, backtest, and save configurations for the D-Man Maker V2 trading strategy. Here’s how you can make the most out of it.
 
 ## Features
 
@@ -14,7 +14,7 @@ Welcome to Configuration Tool! This tool allows you to create, modify, visualize
 
 ### 1. Load Default Configuration
 
-Start by loading the default configuration for the strategy. This provides a baseline setup that you can customize to fit your needs.
+Start by loading the default configuration for the D-Man Maker V2 strategy. This provides a baseline setup that you can customize to fit your needs.
 
 ### 2. User Inputs
 

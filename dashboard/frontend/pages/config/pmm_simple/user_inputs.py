@@ -1,32 +1,14 @@
 from frontend.components.executors_distribution import get_executors_distribution_inputs
-from frontend.components.market_making_general_inputs import (
-    get_market_making_general_inputs,
-)
+from frontend.components.market_making_general_inputs import get_market_making_general_inputs
 from frontend.components.risk_management import get_risk_management_inputs
 
 
 def user_inputs():
-    (
-        connector_name,
-        trading_pair,
-        leverage,
-        total_amount_quote,
-        position_mode,
-        cooldown_time,
-        executor_refresh_time,
-        _,
-        _,
-        _,
-    ) = get_market_making_general_inputs()
-    (
-        buy_spread_distributions,
-        sell_spread_distributions,
-        buy_order_amounts_pct,
-        sell_order_amounts_pct,
-    ) = get_executors_distribution_inputs()
-    sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = (
-        get_risk_management_inputs()
-    )
+    connector_name, trading_pair, leverage, total_amount_quote, position_mode, cooldown_time, \
+        executor_refresh_time, _, _, _ = get_market_making_general_inputs()
+    buy_spread_distributions, sell_spread_distributions, buy_order_amounts_pct, \
+        sell_order_amounts_pct = get_executors_distribution_inputs()
+    sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = get_risk_management_inputs()
     # Create the config
     config = {
         "controller_name": "pmm_simple",
@@ -48,6 +30,9 @@ def user_inputs():
         "take_profit": tp,
         "time_limit": time_limit,
         "take_profit_order_type": take_profit_order_type.value,
-        "trailing_stop": {"activation_price": ts_ap, "trailing_delta": ts_delta},
+        "trailing_stop": {
+            "activation_price": ts_ap,
+            "trailing_delta": ts_delta
+        }
     }
     return config

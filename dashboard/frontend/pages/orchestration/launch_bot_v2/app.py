@@ -26,8 +26,6 @@ else:
 
 
 with elements("create_bot"):
-    with mui.Paper(
-        elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True
-    ):
+    with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
         with launch_bots_board.dashboard():
             launch_bots_board.launch_bot()

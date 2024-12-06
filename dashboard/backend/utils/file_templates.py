@@ -65,7 +65,7 @@ class {strategy_cls_name}(DirectionalTradingControllerBase):
 def get_optuna_suggest_str(field_name: str, properties: Dict):
     if field_name == "candles_config":
         return f"""{field_name}=[
-                        CandlesConfig(connector=exchange, trading_pair=trading_pair,
+                        CandlesConfig(connector=exchange, trading_pair=trading_pair, 
                                       interval="1h", max_records=1000000)
                     ]"""
     if field_name == "strategy_name":
@@ -93,13 +93,8 @@ def strategy_optimization_template(strategy_info: dict):
     strategy_config = strategy_info["config"]
     strategy_module = strategy_info["module"]
     field_schema = strategy_config.schema()["properties"]
-    fields_str = [
-        get_optuna_suggest_str(field_name, properties)
-        for field_name, properties in field_schema.items()
-    ]
-    fields_str = "".join(
-        [f"                    {field_str},\n" for field_str in fields_str]
-    )
+    fields_str = [get_optuna_suggest_str(field_name, properties) for field_name, properties in field_schema.items()]
+    fields_str = "".join([f"                    {field_str},\n" for field_str in fields_str])
     return f"""import traceback
 from decimal import Decimal
 
@@ -108,7 +103,7 @@ from hummingbot.data_feed.candles_feed.candles_factory import CandlesConfig
 from hummingbot.strategy_v2.strategy_frameworks.data_types import TripleBarrierConf, OrderLevel
 from hummingbot.strategy_v2.strategy_frameworks.directional_trading import DirectionalTradingBacktestingEngine
 from hummingbot.strategy_v2.utils.config_encoder_decoder import ConfigEncoderDecoder
-from optuna import TrialPruned
+from optuna import TrialPruned   
 
 from quants_lab.controllers.{strategy_module} import {strategy_cls.__name__}, {strategy_config.__name__}
 
@@ -122,7 +117,7 @@ def objective(trial):
         end = "2024-01-01"
         initial_portfolio_usd = 1000.0
         trade_cost = 0.0006
-
+        
         # The definition of order levels is not so necessary for directional strategies now but let's you customize the
         # amounts for going long or short, the cooldown time between orders and the triple barrier configuration
         stop_loss = trial.suggest_float('stop_loss', 0.01, 0.02, step=0.01)
@@ -135,7 +130,7 @@ def objective(trial):
             trailing_stop_activation_price_delta=Decimal("0.008"),  # It's not working yet with the backtesting engine
             trailing_stop_trailing_delta=Decimal("0.004"),
         )
-
+        
         order_levels = [
             OrderLevel(level=0, side=TradeType.BUY, order_amount_usd=Decimal(50),
                        cooldown_time=15, triple_barrier_conf=triple_barrier_conf),
@@ -148,7 +143,7 @@ def objective(trial):
         controller = {strategy_cls.__name__}(config=config)
         engine = DirectionalTradingBacktestingEngine(controller=controller)
         engine.load_controller_data("./data/candles")
-        backtesting_results = engine.run_backtesting(initial_portfolio_usd=initial_portfolio_usd, trade_cost=trade_cost,
+        backtesting_results = engine.run_backtesting(initial_portfolio_usd=initial_portfolio_usd, trade_cost=trade_cost, 
                                                      start=start, end=end)
 
         strategy_analysis = backtesting_results["results"]

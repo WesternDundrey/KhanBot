@@ -34,9 +34,7 @@ for tab_name in list(fe_board.editor.tabs.keys()):
         fe_board.editor.remove_tab(tab_name)
 
 with elements("file_manager"):
-    with mui.Paper(
-        elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True
-    ):
+    with mui.Paper(elevation=3, style={"padding": "2rem"}, spacing=[2, 2], container=True):
         with fe_board.dashboard():
             fe_board.file_explorer()
             fe_board.editor()

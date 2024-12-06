@@ -21,7 +21,7 @@ class Editor(Dashboard.Item):
             "minHeight": 0,
             "borderBottom": 1,
             "borderTop": 1,
-            "borderColor": "divider",
+            "borderColor": "divider"
         }
 
     def save_file(self):
@@ -56,49 +56,22 @@ class Editor(Dashboard.Item):
         return self._tabs[label]["content"]
 
     def __call__(self):
-        with mui.Paper(
-            key=self._key,
-            sx={
-                "display": "flex",
-                "flexDirection": "column",
-                "borderRadius": 3,
-                "overflow": "hidden",
-            },
-            elevation=1,
-        ):
+        with mui.Paper(key=self._key,
+                       sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
+                       elevation=1):
 
             with self.title_bar("0px 15px 0px 15px"):
-                with mui.Grid(
-                    container=True,
-                    spacing=4,
-                    sx={"display": "flex", "alignItems": "center"},
-                ):
-                    with mui.Grid(
-                        item=True, xs=10, sx={"display": "flex", "alignItems": "center"}
-                    ):
+                with mui.Grid(container=True, spacing=4, sx={"display": "flex", "alignItems": "center"}):
+                    with mui.Grid(item=True, xs=10, sx={"display": "flex", "alignItems": "center"}):
                         mui.icon.Terminal()
                         mui.Typography("Editor", variant="h6", sx={"marginLeft": 1})
-                        with mui.Tabs(
-                            value=self._index,
-                            onChange=self._change_tab,
-                            scrollButtons=True,
-                            variant="scrollable",
-                            sx={"flex": 1},
-                        ):
+                        with mui.Tabs(value=self._index, onChange=self._change_tab, scrollButtons=True,
+                                      variant="scrollable", sx={"flex": 1}):
                             for label in self._tabs.keys():
                                 mui.Tab(label=label)
-                    with mui.Grid(
-                        item=True,
-                        xs=2,
-                        sx={"display": "flex", "justifyContent": "flex-end"},
-                    ):
+                    with mui.Grid(item=True, xs=2, sx={"display": "flex", "justifyContent": "flex-end"}):
                         mui.Button("Apply Changes", variant="contained", onClick=sync())
-                        mui.Button(
-                            "Save Changes",
-                            variant="contained",
-                            onClick=self.save_file,
-                            sx={"mx": 1},
-                        )
+                        mui.Button("Save Changes", variant="contained", onClick=self.save_file, sx={"mx": 1})
 
             for index, (label, tab) in enumerate(self._tabs.items()):
                 with mui.Box(sx=self._editor_box_style, hidden=(index != self._index)):
@@ -112,10 +85,8 @@ class Editor(Dashboard.Item):
                         options={
                             "wordWrap": True,
                             "fontSize": 16.5,
-                        },
+                        }
                     )
 
-            with mui.Stack(
-                direction="row", spacing=2, alignItems="center", sx={"padding": "10px"}
-            ):
+            with mui.Stack(direction="row", spacing=2, alignItems="center", sx={"padding": "10px"}):
                 event.Hotkey("ctrl+s", sync(), bindInputs=True, overrideDefault=True)

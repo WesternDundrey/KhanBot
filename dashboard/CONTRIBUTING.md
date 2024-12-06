@@ -82,7 +82,7 @@ For a list of currently outstanding tasks and owners, refer to the [Dashboard Ba
 
 ## Meetings
 
-If you can, please attend the dashboard bi-weekly meetings on [Discord](https://discord.gg/hummingbot) where the project's progress is discussed and tasks are outlined.
+If you can, please attend the dashboard bi-weekly meetings on [Discord](https://discord.gg/hummingbot) where the project's progress is discussed and tasks are outlined. 
 
 ## Dashboard Wiki
 

@@ -15,42 +15,38 @@ from frontend.visualization.utils import add_traces_to_fig
 
 def get_grid_range_traces(grid_ranges):
     """Generate horizontal line traces for grid ranges with different colors."""
-    dash_styles = ["solid", "dash", "dot", "dashdot", "longdash"]  # 5 different styles
+    dash_styles = ['solid', 'dash', 'dot', 'dashdot', 'longdash']  # 5 different styles
     traces = []
     buy_count = 0
     sell_count = 0
     for i, grid_range in enumerate(grid_ranges):
         # Set color based on trade type
         if grid_range["side"] == TradeType.BUY:
-            color = "rgba(0, 255, 0, 1)"  # Bright green for buy
+            color = 'rgba(0, 255, 0, 1)'  # Bright green for buy
             dash_style = dash_styles[buy_count % len(dash_styles)]
             buy_count += 1
         else:
-            color = "rgba(255, 0, 0, 1)"  # Bright red for sell
+            color = 'rgba(255, 0, 0, 1)'  # Bright red for sell
             dash_style = dash_styles[sell_count % len(dash_styles)]
             sell_count += 1
         # Start price line
-        traces.append(
-            go.Scatter(
-                x=[],  # Will be set to full range when plotting
-                y=[float(grid_range["start_price"]), float(grid_range["start_price"])],
-                mode="lines",
-                line=dict(color=color, width=1.5, dash=dash_style),
-                name=f'Range {i} Start: {float(grid_range["start_price"]):,.2f} ({grid_range["side"].name})',
-                hoverinfo="name",
-            )
-        )
+        traces.append(go.Scatter(
+            x=[],  # Will be set to full range when plotting
+            y=[float(grid_range["start_price"]), float(grid_range["start_price"])],
+            mode='lines',
+            line=dict(color=color, width=1.5, dash=dash_style),
+            name=f'Range {i} Start: {float(grid_range["start_price"]):,.2f} ({grid_range["side"].name})',
+            hoverinfo='name'
+        ))
         # End price line
-        traces.append(
-            go.Scatter(
-                x=[],  # Will be set to full range when plotting
-                y=[float(grid_range["end_price"]), float(grid_range["end_price"])],
-                mode="lines",
-                line=dict(color=color, width=1.5, dash=dash_style),
-                name=f'Range {i} End: {float(grid_range["end_price"]):,.2f} ({grid_range["side"].name})',
-                hoverinfo="name",
-            )
-        )
+        traces.append(go.Scatter(
+            x=[],  # Will be set to full range when plotting
+            y=[float(grid_range["end_price"]), float(grid_range["end_price"])],
+            mode='lines',
+            line=dict(color=color, width=1.5, dash=dash_style),
+            name=f'Range {i} End: {float(grid_range["end_price"]):,.2f} ({grid_range["side"].name})',
+            hoverinfo='name'
+        ))
     return traces
 
 
@@ -68,13 +64,12 @@ candles = get_candles(
     connector_name=inputs["connector_name"],
     trading_pair=inputs["trading_pair"],
     interval=inputs["interval"],
-    days=inputs["days_to_visualize"],
+    days=inputs["days_to_visualize"]
 )
 
 # Create a subplot with just 1 row for price action
 fig = make_subplots(
-    rows=1,
-    cols=1,
+    rows=1, cols=1,
     subplot_titles=(f'Grid Strike - {inputs["trading_pair"]} ({inputs["interval"]})',),
 )
 
@@ -92,13 +87,11 @@ for trace in grid_traces:
 # Update y-axis to make sure all grid ranges and candles are visible
 all_prices = []
 # Add candle prices
-all_prices.extend(candles["high"].tolist())
-all_prices.extend(candles["low"].tolist())
+all_prices.extend(candles['high'].tolist())
+all_prices.extend(candles['low'].tolist())
 # Add grid range prices
 for grid_range in inputs["grid_ranges"]:
-    all_prices.extend(
-        [float(grid_range["start_price"]), float(grid_range["end_price"])]
-    )
+    all_prices.extend([float(grid_range["start_price"]), float(grid_range["end_price"])])
 
 y_min, y_max = min(all_prices), max(all_prices)
 padding = (y_max - y_min) * 0.1  # Add 10% padding
@@ -107,19 +100,25 @@ fig.update_yaxes(range=[y_min - padding, y_max + padding])
 # Update layout for better visualization
 layout_updates = {
     "legend": dict(
-        yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(0,0,0,0.5)"
+        yanchor="top",
+        y=0.99,
+        xanchor="left",
+        x=0.01,
+        bgcolor="rgba(0,0,0,0.5)"
     ),
-    "hovermode": "x unified",
+    "hovermode": 'x unified',
     "showlegend": True,
     "height": 600,  # Make the chart taller
     "yaxis": dict(
         fixedrange=False,  # Allow y-axis zooming
         autorange=True,  # Enable auto-ranging
-    ),
+    )
 }
 
 # Merge the default theme with our updates
-fig.update_layout(**(theme.get_default_layout() | layout_updates))
+fig.update_layout(
+    **(theme.get_default_layout() | layout_updates)
+)
 
 # Use Streamlit's functionality to display the plot
 st.plotly_chart(fig, use_container_width=True)
@@ -134,9 +133,7 @@ def prepare_config_for_save(config):
         grid_range = grid_range.copy()
         grid_range["side"] = grid_range["side"].value
         grid_range["open_order_type"] = grid_range["open_order_type"].value
-        grid_range["take_profit_order_type"] = grid_range[
-            "take_profit_order_type"
-        ].value
+        grid_range["take_profit_order_type"] = grid_range["take_profit_order_type"].value
         grid_ranges.append(grid_range)
     prepared_config["grid_ranges"] = grid_ranges
     prepared_config["position_mode"] = prepared_config["position_mode"].value
@@ -147,7 +144,5 @@ def prepare_config_for_save(config):
 
 
 # Replace the render_save_config line with:
-render_save_config(
-    st.session_state["default_config"]["id"],
-    prepare_config_for_save(st.session_state["default_config"]),
-)
+render_save_config(st.session_state["default_config"]["id"],
+                   prepare_config_for_save(st.session_state["default_config"]))

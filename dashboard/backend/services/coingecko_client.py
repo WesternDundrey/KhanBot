@@ -32,12 +32,9 @@ class CoinGeckoClient:
 
         coin_tickers_df = pd.concat(dfs)
         coin_tickers_df["exchange"] = coin_tickers_df["market"].apply(
-            lambda x: re.sub("Exchange", "", x["name"])
-        )
+            lambda x: re.sub("Exchange", "", x["name"]))
         coin_tickers_df.drop(columns="market", inplace=True)
-        coin_tickers_df["trading_pair"] = (
-            coin_tickers_df.base + "-" + coin_tickers_df.target
-        )
+        coin_tickers_df["trading_pair"] = coin_tickers_df.base + "-" + coin_tickers_df.target
         return coin_tickers_df
 
     def get_all_exchanges_df(self):
@@ -47,16 +44,11 @@ class CoinGeckoClient:
     def get_exchanges_markets_info_by_id_list(self, exchanges_id: list):
         dfs = []
         for exchange_id in exchanges_id:
-            df = pd.DataFrame(
-                self.connector.get_exchanges_by_id(exchange_id)["tickers"]
-            )
+            df = pd.DataFrame(self.connector.get_exchanges_by_id(exchange_id)["tickers"])
             dfs.append(df)
         exchanges_spreads_df = pd.concat(dfs)
         exchanges_spreads_df["exchange"] = exchanges_spreads_df["market"].apply(
-            lambda x: re.sub("Exchange", "", x["name"])
-        )
+            lambda x: re.sub("Exchange", "", x["name"]))
         exchanges_spreads_df.drop(columns="market", inplace=True)
-        exchanges_spreads_df["trading_pair"] = (
-            exchanges_spreads_df.base + "-" + exchanges_spreads_df.target
-        )
+        exchanges_spreads_df["trading_pair"] = exchanges_spreads_df.base + "-" + exchanges_spreads_df.target
         return exchanges_spreads_df

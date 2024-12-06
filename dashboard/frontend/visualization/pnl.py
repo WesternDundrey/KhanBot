@@ -12,7 +12,7 @@ def get_pnl_trace(executors: List[ExecutorInfo]):
     return go.Scatter(
         x=pd.to_datetime([e.close_timestamp for e in executors], unit="s"),
         y=cum_pnl,
-        mode="lines",
-        line=dict(color="gold", width=2, dash="dash"),
-        name="Cumulative PNL",
+        mode='lines',
+        line=dict(color='gold', width=2, dash="dash"),
+        name='Cumulative PNL'
     )
