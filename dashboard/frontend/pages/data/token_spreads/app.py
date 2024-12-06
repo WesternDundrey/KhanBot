@@ -33,29 +33,36 @@ def get_coin_tickers_by_id_list(coins_id: list):
     return cg_utils.get_coin_tickers_by_id_list(coins_id)
 
 
-with st.spinner(text='In progress'):
+with st.spinner(text="In progress"):
     exchanges_df = get_all_exchanges_df()
     coins_df = get_all_coins_df()
     miner_stats_df = get_miner_stats_df()
 
-miner_coins = coins_df.loc[coins_df["symbol"].isin(miner_stats_df["base"].str.lower().unique()), "name"]
+miner_coins = coins_df.loc[
+    coins_df["symbol"].isin(miner_stats_df["base"].str.lower().unique()), "name"
+]
 
 tokens = st.multiselect(
     "Select the tokens to analyze:",
     options=coins_df["name"],
-    default=CONFIG.DEFAULT_MINER_COINS
+    default=CONFIG.DEFAULT_MINER_COINS,
 )
 
 coins_id = coins_df.loc[coins_df["name"].isin(tokens), "id"].tolist()
 
 coin_tickers_df = get_coin_tickers_by_id_list(coins_id)
 coin_tickers_df["coin_name"] = coin_tickers_df.apply(
-    lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1)
+    lambda x: coins_df.loc[coins_df["id"] == x.token_id, "name"].item(), axis=1
+)
 
 exchanges = st.multiselect(
     "Select the exchanges to analyze:",
     options=exchanges_df["name"],
-    default=[exchange for exchange in CONFIG.MINER_EXCHANGES if exchange in exchanges_df["name"].unique()]
+    default=[
+        exchange
+        for exchange in CONFIG.MINER_EXCHANGES
+        if exchange in exchanges_df["name"].unique()
+    ],
 )
 
 height = len(coin_tickers_df["coin_name"].unique()) * 500
@@ -74,9 +81,9 @@ fig = px.scatter(
     template="plotly_dark",
     title="Spread and Volume Chart",
     labels={
-        "volume": 'Volume (USD)',
-        'bid_ask_spread_percentage': 'Bid Ask Spread (%)'
-    }
+        "volume": "Volume (USD)",
+        "bid_ask_spread_percentage": "Bid Ask Spread (%)",
+    },
 )
 
 # st.write("# Data filters 🏷")

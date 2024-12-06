@@ -9,8 +9,14 @@ from hummingbot.strategy_v2.controllers.market_making_controller_base import (
     MarketMakingControllerBase,
     MarketMakingControllerConfigBase,
 )
-from hummingbot.strategy_v2.executors.dca_executor.data_types import DCAExecutorConfig, DCAMode
-from hummingbot.strategy_v2.models.executor_actions import ExecutorAction, StopExecutorAction
+from hummingbot.strategy_v2.executors.dca_executor.data_types import (
+    DCAExecutorConfig,
+    DCAMode,
+)
+from hummingbot.strategy_v2.models.executor_actions import (
+    ExecutorAction,
+    StopExecutorAction,
+)
 from pydantic import Field, validator
 
 
@@ -26,29 +32,36 @@ class DManMakerV2Config(MarketMakingControllerConfigBase):
     dca_spreads: List[Decimal] = Field(
         default="0.01,0.02,0.04,0.08",
         client_data=ClientFieldData(
-            prompt_on_new=True, prompt=lambda mi: "Enter a comma-separated list of spreads for each DCA level: "
+            prompt_on_new=True,
+            prompt=lambda mi: "Enter a comma-separated list of spreads for each DCA level: ",
         ),
     )
     dca_amounts: List[Decimal] = Field(
         default="0.1,0.2,0.4,0.8",
         client_data=ClientFieldData(
-            prompt_on_new=True, prompt=lambda mi: "Enter a comma-separated list of amounts for each DCA level: "
+            prompt_on_new=True,
+            prompt=lambda mi: "Enter a comma-separated list of amounts for each DCA level: ",
         ),
     )
     time_limit: int = Field(
         default=60 * 60 * 24 * 7,
         gt=0,
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the time limit for each DCA level: ", prompt_on_new=False),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the time limit for each DCA level: ",
+            prompt_on_new=False,
+        ),
     )
     stop_loss: Decimal = Field(
         default=Decimal("0.03"),
         gt=0,
         client_data=ClientFieldData(
-            prompt=lambda mi: "Enter the stop loss (as a decimal, e.g., 0.03 for 3%): ", prompt_on_new=True
+            prompt=lambda mi: "Enter the stop loss (as a decimal, e.g., 0.03 for 3%): ",
+            prompt_on_new=True,
         ),
     )
     top_executor_refresh_time: Optional[float] = Field(
-        default=None, client_data=ClientFieldData(is_updatable=True, prompt_on_new=False)
+        default=None,
+        client_data=ClientFieldData(is_updatable=True, prompt_on_new=False),
     )
     executor_activation_bounds: Optional[List[Decimal]] = Field(
         default=None,
@@ -87,7 +100,9 @@ class DManMakerV2Config(MarketMakingControllerConfigBase):
         if isinstance(v, str):
             return [float(x.strip()) for x in v.split(",")]
         elif isinstance(v, list) and len(v) != len(values["dca_spreads"]):
-            raise ValueError(f"The number of {field.name} must match the number of {values['dca_spreads']}.")
+            raise ValueError(
+                f"The number of {field.name} must match the number of {values['dca_spreads']}."
+            )
         return v
 
 
@@ -95,26 +110,41 @@ class DManMakerV2(MarketMakingControllerBase):
     def __init__(self, config: DManMakerV2Config, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
         self.config = config
-        self.dca_amounts_pct = [Decimal(amount) / sum(self.config.dca_amounts) for amount in self.config.dca_amounts]
+        self.dca_amounts_pct = [
+            Decimal(amount) / sum(self.config.dca_amounts)
+            for amount in self.config.dca_amounts
+        ]
         self.spreads = self.config.dca_spreads
 
     def first_level_refresh_condition(self, executor):
         if self.config.top_executor_refresh_time is not None:
             if self.get_level_from_level_id(executor.custom_info["level_id"]) == 0:
-                return self.market_data_provider.time() - executor.timestamp > self.config.top_executor_refresh_time * 1000
+                return (
+                    self.market_data_provider.time() - executor.timestamp
+                    > self.config.top_executor_refresh_time * 1000
+                )
         return False
 
     def order_level_refresh_condition(self, executor):
-        return self.market_data_provider.time() - executor.timestamp > self.config.executor_refresh_time * 1000
+        return (
+            self.market_data_provider.time() - executor.timestamp
+            > self.config.executor_refresh_time * 1000
+        )
 
     def executors_to_refresh(self) -> List[ExecutorAction]:
         executors_to_refresh = self.filter_executors(
             executors=self.executors_info,
             filter_func=lambda x: not x.is_trading
             and x.is_active
-            and (self.order_level_refresh_condition(x) or self.first_level_refresh_condition(x)),
+            and (
+                self.order_level_refresh_condition(x)
+                or self.first_level_refresh_condition(x)
+            ),
         )
-        return [StopExecutorAction(controller_id=self.config.id, executor_id=executor.id) for executor in executors_to_refresh]
+        return [
+            StopExecutorAction(controller_id=self.config.id, executor_id=executor.id)
+            for executor in executors_to_refresh
+        ]
 
     def get_executor_config(self, level_id: str, price: Decimal, amount: Decimal):
         trade_type = self.get_trade_type_from_level_id(level_id)

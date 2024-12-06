@@ -8,9 +8,14 @@ from frontend.visualization.theme import get_default_layout
 
 def create_backtesting_figure(df, executors, config):
     # Create subplots
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                        vertical_spacing=0.02, subplot_titles=('Candlestick', 'PNL Quote'),
-                        row_heights=[0.7, 0.3])
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        subplot_titles=("Candlestick", "PNL Quote"),
+        row_heights=[0.7, 0.3],
+    )
 
     # Add candlestick trace
     fig.add_trace(get_bt_candlestick_trace(df), row=1, col=1)

@@ -32,20 +32,35 @@ async def get_script_config(script_name: str):
     """
     config_class = file_system.load_script_config_class(script_name)
     if config_class is None:
-        raise HTTPException(status_code=404, detail="Script configuration class not found")
+        raise HTTPException(
+            status_code=404, detail="Script configuration class not found"
+        )
 
     # Extracting fields and default values
-    config_fields = {field.name: field.default for field in config_class.__fields__.values()}
-    return json.loads(json.dumps(config_fields, default=str))  # Handling non-serializable types like Decimal
+    config_fields = {
+        field.name: field.default for field in config_class.__fields__.values()
+    }
+    return json.loads(
+        json.dumps(config_fields, default=str)
+    )  # Handling non-serializable types like Decimal
 
 
 @router.get("/list-controllers", response_model=dict)
 async def list_controllers():
     directional_trading_controllers = [
-        file for file in file_system.list_files("controllers/directional_trading") if file != "__init__.py"
+        file
+        for file in file_system.list_files("controllers/directional_trading")
+        if file != "__init__.py"
     ]
-    market_making_controllers = [file for file in file_system.list_files("controllers/market_making") if file != "__init__.py"]
-    return {"directional_trading": directional_trading_controllers, "market_making": market_making_controllers}
+    market_making_controllers = [
+        file
+        for file in file_system.list_files("controllers/market_making")
+        if file != "__init__.py"
+    ]
+    return {
+        "directional_trading": directional_trading_controllers,
+        "market_making": market_making_controllers,
+    }
 
 
 @router.get("/list-controllers-configs", response_model=List[str])
@@ -85,9 +100,13 @@ async def update_controller_config(bot_name: str, controller_id: str, config: Di
     bots_config_path = f"instances/{bot_name}/conf/controllers"
     if not file_system.path_exists(bots_config_path):
         raise HTTPException(status_code=400, detail="Bot not found.")
-    current_config = file_system.read_yaml_file(f"bots/{bots_config_path}/{controller_id}.yml")
+    current_config = file_system.read_yaml_file(
+        f"bots/{bots_config_path}/{controller_id}.yml"
+    )
     current_config.update(config)
-    file_system.dump_dict_to_yaml(f"bots/{bots_config_path}/{controller_id}.yml", current_config)
+    file_system.dump_dict_to_yaml(
+        f"bots/{bots_config_path}/{controller_id}.yml", current_config
+    )
     return {"message": "Controller configuration updated successfully."}
 
 
@@ -104,7 +123,9 @@ async def add_script(script: Script, override: bool = False):
 async def upload_script(config_file: UploadFile = File(...), override: bool = False):
     try:
         contents = await config_file.read()
-        file_system.add_file("scripts", config_file.filename, contents.decode(), override)
+        file_system.add_file(
+            "scripts", config_file.filename, contents.decode(), override
+        )
         return {"message": "Script uploaded successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -115,17 +136,23 @@ async def add_script_config(config: ScriptConfig):
     try:
         yaml_content = yaml.dump(config.content)
 
-        file_system.add_file("conf/scripts", config.name + ".yml", yaml_content, override=True)
+        file_system.add_file(
+            "conf/scripts", config.name + ".yml", yaml_content, override=True
+        )
         return {"message": "Script configuration uploaded successfully."}
     except Exception as e:  # Consider more specific exception handling
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/upload-script-config")
-async def upload_script_config(config_file: UploadFile = File(...), override: bool = False):
+async def upload_script_config(
+    config_file: UploadFile = File(...), override: bool = False
+):
     try:
         contents = await config_file.read()
-        file_system.add_file("conf/scripts", config_file.filename, contents.decode(), override)
+        file_system.add_file(
+            "conf/scripts", config_file.filename, contents.decode(), override
+        )
         return {"message": "Script configuration uploaded successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -136,17 +163,23 @@ async def add_controller_config(config: ScriptConfig):
     try:
         yaml_content = yaml.dump(config.content)
 
-        file_system.add_file("conf/controllers", config.name + ".yml", yaml_content, override=True)
+        file_system.add_file(
+            "conf/controllers", config.name + ".yml", yaml_content, override=True
+        )
         return {"message": "Controller configuration uploaded successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/upload-controller-config")
-async def upload_controller_config(config_file: UploadFile = File(...), override: bool = False):
+async def upload_controller_config(
+    config_file: UploadFile = File(...), override: bool = False
+):
     try:
         contents = await config_file.read()
-        file_system.add_file("conf/controllers", config_file.filename, contents.decode(), override)
+        file_system.add_file(
+            "conf/controllers", config_file.filename, contents.decode(), override
+        )
         return {"message": "Controller configuration uploaded successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -156,7 +189,9 @@ async def upload_controller_config(config_file: UploadFile = File(...), override
 async def delete_controller_config(config_name: str):
     try:
         file_system.delete_file("conf/controllers", config_name)
-        return {"message": f"Controller configuration {config_name} deleted successfully."}
+        return {
+            "message": f"Controller configuration {config_name} deleted successfully."
+        }
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -40,7 +40,13 @@ async def read_databases(db_paths: List[str] = None):
             }
         except Exception as e:
             print(f"Error reading database {db_path}: {str(e)}")
-            db_content = {"db_name": "", "db_path": db_path, "healthy": False, "status": db.status, "tables": {}}
+            db_content = {
+                "db_name": "",
+                "db_path": db_path,
+                "healthy": False,
+                "status": db.status,
+                "tables": {},
+            }
         dbs.append(db_content)
     return dbs
 
@@ -52,7 +58,13 @@ async def create_checkpoint(db_paths: List[str]):
 
         healthy_dbs = [db for db in dbs if db["healthy"]]
 
-        table_names = ["trade_fill", "orders", "order_status", "executors", "controllers"]
+        table_names = [
+            "trade_fill",
+            "orders",
+            "order_status",
+            "executors",
+            "controllers",
+        ]
         tables_dict = {name: pd.DataFrame() for name in table_names}
 
         for db in healthy_dbs:
@@ -62,7 +74,9 @@ async def create_checkpoint(db_paths: List[str]):
                 new_data["db_name"] = db["db_name"]
                 tables_dict[table_name] = pd.concat([tables_dict[table_name], new_data])
 
-        etl = ETLPerformance(db_path=f"bots/data/checkpoint_{str(int(time.time()))}.sqlite")
+        etl = ETLPerformance(
+            db_path=f"bots/data/checkpoint_{str(int(time.time()))}.sqlite"
+        )
         etl.create_tables()
         etl.insert_data(tables_dict)
         return {"message": "Checkpoint created successfully."}

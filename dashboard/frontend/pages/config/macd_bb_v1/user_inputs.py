@@ -1,6 +1,8 @@
 import streamlit as st
 
-from frontend.components.directional_trading_general_inputs import get_directional_trading_general_inputs
+from frontend.components.directional_trading_general_inputs import (
+    get_directional_trading_general_inputs,
+)
 from frontend.components.risk_management import get_risk_management_inputs
 
 
@@ -13,19 +15,42 @@ def user_inputs():
     macd_fast = default_config.get("macd_fast", 21)
     macd_slow = default_config.get("macd_slow", 42)
     macd_signal = default_config.get("macd_signal", 9)
-    connector_name, trading_pair, leverage, total_amount_quote, max_executors_per_side, cooldown_time, position_mode,\
-        candles_connector_name, candles_trading_pair, interval = get_directional_trading_general_inputs()
-    sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = get_risk_management_inputs()
+    (
+        connector_name,
+        trading_pair,
+        leverage,
+        total_amount_quote,
+        max_executors_per_side,
+        cooldown_time,
+        position_mode,
+        candles_connector_name,
+        candles_trading_pair,
+        interval,
+    ) = get_directional_trading_general_inputs()
+    sl, tp, time_limit, ts_ap, ts_delta, take_profit_order_type = (
+        get_risk_management_inputs()
+    )
     with st.expander("MACD Bollinger Configuration", expanded=True):
         c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
         with c1:
-            bb_length = st.number_input("Bollinger Bands Length", min_value=5, max_value=1000, value=bb_length)
+            bb_length = st.number_input(
+                "Bollinger Bands Length", min_value=5, max_value=1000, value=bb_length
+            )
         with c2:
-            bb_std = st.number_input("Standard Deviation Multiplier", min_value=1.0, max_value=2.0, value=bb_std)
+            bb_std = st.number_input(
+                "Standard Deviation Multiplier",
+                min_value=1.0,
+                max_value=2.0,
+                value=bb_std,
+            )
         with c3:
-            bb_long_threshold = st.number_input("Long Threshold", value=bb_long_threshold)
+            bb_long_threshold = st.number_input(
+                "Long Threshold", value=bb_long_threshold
+            )
         with c4:
-            bb_short_threshold = st.number_input("Short Threshold", value=bb_short_threshold)
+            bb_short_threshold = st.number_input(
+                "Short Threshold", value=bb_short_threshold
+            )
         with c5:
             macd_fast = st.number_input("MACD Fast", min_value=1, value=macd_fast)
         with c6:
@@ -56,9 +81,6 @@ def user_inputs():
         "stop_loss": sl,
         "take_profit": tp,
         "time_limit": time_limit,
-        "trailing_stop": {
-            "activation_price": ts_ap,
-            "trailing_delta": ts_delta
-        },
-        "take_profit_order_type": take_profit_order_type.value
+        "trailing_stop": {"activation_price": ts_ap, "trailing_delta": ts_delta},
+        "take_profit_order_type": take_profit_order_type.value,
     }

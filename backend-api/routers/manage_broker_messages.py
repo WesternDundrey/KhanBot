@@ -7,7 +7,10 @@ from services.bots_orchestrator import BotsManager
 # Initialize the scheduler
 router = APIRouter(tags=["Manage Broker Messages"])
 bots_manager = BotsManager(
-    broker_host=BROKER_HOST, broker_port=BROKER_PORT, broker_username=BROKER_USERNAME, broker_password=BROKER_PASSWORD
+    broker_host=BROKER_HOST,
+    broker_port=BROKER_PORT,
+    broker_username=BROKER_USERNAME,
+    broker_password=BROKER_PASSWORD,
 )
 
 
@@ -45,7 +48,11 @@ def get_bot_history(bot_name: str):
 @router.post("/start-bot")
 def start_bot(action: StartBotAction):
     response = bots_manager.start_bot(
-        action.bot_name, log_level=action.log_level, script=action.script, conf=action.conf, async_backend=action.async_backend
+        action.bot_name,
+        log_level=action.log_level,
+        script=action.script,
+        conf=action.conf,
+        async_backend=action.async_backend,
     )
     return {"status": "success", "response": response}
 
@@ -53,7 +60,9 @@ def start_bot(action: StartBotAction):
 @router.post("/stop-bot")
 def stop_bot(action: StopBotAction):
     response = bots_manager.stop_bot(
-        action.bot_name, skip_order_cancellation=action.skip_order_cancellation, async_backend=action.async_backend
+        action.bot_name,
+        skip_order_cancellation=action.skip_order_cancellation,
+        async_backend=action.async_backend,
     )
     return {"status": "success", "response": response}
 

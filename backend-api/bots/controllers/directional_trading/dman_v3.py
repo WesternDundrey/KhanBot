@@ -10,7 +10,10 @@ from hummingbot.strategy_v2.controllers.directional_trading_controller_base impo
     DirectionalTradingControllerBase,
     DirectionalTradingControllerConfigBase,
 )
-from hummingbot.strategy_v2.executors.dca_executor.data_types import DCAExecutorConfig, DCAMode
+from hummingbot.strategy_v2.executors.dca_executor.data_types import (
+    DCAExecutorConfig,
+    DCAMode,
+)
 from hummingbot.strategy_v2.executors.position_executor.data_types import TrailingStop
 from pydantic import Field, validator
 
@@ -22,25 +25,38 @@ class DManV3ControllerConfig(DirectionalTradingControllerConfigBase):
     candles_trading_pair: str = Field(default=None)
     interval: str = Field(
         default="30m",
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the candle interval (e.g., 1m, 5m, 1h, 1d): ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the candle interval (e.g., 1m, 5m, 1h, 1d): ",
+            prompt_on_new=True,
+        ),
     )
     bb_length: int = Field(
-        default=100, client_data=ClientFieldData(prompt=lambda mi: "Enter the Bollinger Bands length: ", prompt_on_new=True)
+        default=100,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the Bollinger Bands length: ", prompt_on_new=True
+        ),
     )
     bb_std: float = Field(
         default=2.0,
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the Bollinger Bands standard deviation: ", prompt_on_new=False),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the Bollinger Bands standard deviation: ",
+            prompt_on_new=False,
+        ),
     )
     bb_long_threshold: float = Field(
         default=0.0,
         client_data=ClientFieldData(
-            is_updatable=True, prompt=lambda mi: "Enter the Bollinger Bands long threshold: ", prompt_on_new=True
+            is_updatable=True,
+            prompt=lambda mi: "Enter the Bollinger Bands long threshold: ",
+            prompt_on_new=True,
         ),
     )
     bb_short_threshold: float = Field(
         default=1.0,
         client_data=ClientFieldData(
-            is_updatable=True, prompt=lambda mi: "Enter the Bollinger Bands short threshold: ", prompt_on_new=True
+            is_updatable=True,
+            prompt=lambda mi: "Enter the Bollinger Bands short threshold: ",
+            prompt_on_new=True,
         ),
     )
     dca_spreads: List[Decimal] = Field(
@@ -62,11 +78,17 @@ class DManV3ControllerConfig(DirectionalTradingControllerConfigBase):
     )
     dynamic_order_spread: bool = Field(
         default=None,
-        client_data=ClientFieldData(prompt=lambda mi: "Do you want to make the spread dynamic? (Yes/No) ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Do you want to make the spread dynamic? (Yes/No) ",
+            prompt_on_new=True,
+        ),
     )
     dynamic_target: bool = Field(
         default=None,
-        client_data=ClientFieldData(prompt=lambda mi: "Do you want to make the target dynamic? (Yes/No) ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Do you want to make the target dynamic? (Yes/No) ",
+            prompt_on_new=True,
+        ),
     )
 
     activation_bounds: Optional[List[Decimal]] = Field(
@@ -118,11 +140,17 @@ class DManV3ControllerConfig(DirectionalTradingControllerConfigBase):
             normalized_amounts_pct = [Decimal("1.0") / len(spreads) for _ in spreads]
         else:
             if trade_type == TradeType.BUY:
-                normalized_amounts_pct = [amt_pct / sum(amounts_pct) for amt_pct in amounts_pct]
+                normalized_amounts_pct = [
+                    amt_pct / sum(amounts_pct) for amt_pct in amounts_pct
+                ]
             else:  # TradeType.SELL
-                normalized_amounts_pct = [amt_pct / sum(amounts_pct) for amt_pct in amounts_pct]
+                normalized_amounts_pct = [
+                    amt_pct / sum(amounts_pct) for amt_pct in amounts_pct
+                ]
 
-        return self.dca_spreads, [amt_pct * total_amount_quote for amt_pct in normalized_amounts_pct]
+        return self.dca_spreads, [
+            amt_pct * total_amount_quote for amt_pct in normalized_amounts_pct
+        ]
 
     @validator("candles_connector", pre=True, always=True)
     def set_candles_connector(cls, v, values):
@@ -168,8 +196,14 @@ class DManV3Controller(DirectionalTradingControllerBase):
         df.ta.bbands(length=self.config.bb_length, std=self.config.bb_std, append=True)
 
         # Generate signal
-        long_condition = df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"] < self.config.bb_long_threshold
-        short_condition = df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"] > self.config.bb_short_threshold
+        long_condition = (
+            df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"]
+            < self.config.bb_long_threshold
+        )
+        short_condition = (
+            df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"]
+            > self.config.bb_short_threshold
+        )
 
         # Generate signal
         df["signal"] = 0
@@ -188,8 +222,12 @@ class DManV3Controller(DirectionalTradingControllerBase):
         else:
             return Decimal("1.0")
 
-    def get_executor_config(self, trade_type: TradeType, price: Decimal, amount: Decimal) -> DCAExecutorConfig:
-        spread, amounts_quote = self.config.get_spreads_and_amounts_in_quote(trade_type, amount * price)
+    def get_executor_config(
+        self, trade_type: TradeType, price: Decimal, amount: Decimal
+    ) -> DCAExecutorConfig:
+        spread, amounts_quote = self.config.get_spreads_and_amounts_in_quote(
+            trade_type, amount * price
+        )
         spread_multiplier = self.get_spread_multiplier()
         if trade_type == TradeType.BUY:
             prices = [price * (1 - spread * spread_multiplier) for spread in spread]
@@ -198,8 +236,10 @@ class DManV3Controller(DirectionalTradingControllerBase):
         if self.config.dynamic_target:
             stop_loss = self.config.stop_loss * spread_multiplier
             trailing_stop = TrailingStop(
-                activation_price=self.config.trailing_stop.activation_price * spread_multiplier,
-                trailing_delta=self.config.trailing_stop.trailing_delta * spread_multiplier,
+                activation_price=self.config.trailing_stop.activation_price
+                * spread_multiplier,
+                trailing_delta=self.config.trailing_stop.trailing_delta
+                * spread_multiplier,
             )
         else:
             stop_loss = self.config.stop_loss

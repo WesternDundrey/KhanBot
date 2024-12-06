@@ -17,31 +17,55 @@ class MACDBBV1ControllerConfig(DirectionalTradingControllerConfigBase):
     candles_trading_pair: str = Field(default=None)
     interval: str = Field(
         default="3m",
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the candle interval (e.g., 1m, 5m, 1h, 1d): ", prompt_on_new=False),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the candle interval (e.g., 1m, 5m, 1h, 1d): ",
+            prompt_on_new=False,
+        ),
     )
     bb_length: int = Field(
-        default=100, client_data=ClientFieldData(prompt=lambda mi: "Enter the Bollinger Bands length: ", prompt_on_new=True)
+        default=100,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the Bollinger Bands length: ", prompt_on_new=True
+        ),
     )
     bb_std: float = Field(
         default=2.0,
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the Bollinger Bands standard deviation: ", prompt_on_new=False),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the Bollinger Bands standard deviation: ",
+            prompt_on_new=False,
+        ),
     )
     bb_long_threshold: float = Field(
         default=0.0,
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the Bollinger Bands long threshold: ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the Bollinger Bands long threshold: ",
+            prompt_on_new=True,
+        ),
     )
     bb_short_threshold: float = Field(
         default=1.0,
-        client_data=ClientFieldData(prompt=lambda mi: "Enter the Bollinger Bands short threshold: ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the Bollinger Bands short threshold: ",
+            prompt_on_new=True,
+        ),
     )
     macd_fast: int = Field(
-        default=21, client_data=ClientFieldData(prompt=lambda mi: "Enter the MACD fast period: ", prompt_on_new=True)
+        default=21,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the MACD fast period: ", prompt_on_new=True
+        ),
     )
     macd_slow: int = Field(
-        default=42, client_data=ClientFieldData(prompt=lambda mi: "Enter the MACD slow period: ", prompt_on_new=True)
+        default=42,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the MACD slow period: ", prompt_on_new=True
+        ),
     )
     macd_signal: int = Field(
-        default=9, client_data=ClientFieldData(prompt=lambda mi: "Enter the MACD signal period: ", prompt_on_new=True)
+        default=9,
+        client_data=ClientFieldData(
+            prompt=lambda mi: "Enter the MACD signal period: ", prompt_on_new=True
+        ),
     )
 
     @validator("candles_connector", pre=True, always=True)
@@ -61,7 +85,9 @@ class MACDBBV1Controller(DirectionalTradingControllerBase):
 
     def __init__(self, config: MACDBBV1ControllerConfig, *args, **kwargs):
         self.config = config
-        self.max_records = max(config.macd_slow, config.macd_fast, config.macd_signal, config.bb_length)
+        self.max_records = max(
+            config.macd_slow, config.macd_fast, config.macd_signal, config.bb_length
+        )
         if len(self.config.candles_config) == 0:
             self.config.candles_config = [
                 CandlesConfig(
@@ -82,15 +108,28 @@ class MACDBBV1Controller(DirectionalTradingControllerBase):
         )
         # Add indicators
         df.ta.bbands(length=self.config.bb_length, std=self.config.bb_std, append=True)
-        df.ta.macd(fast=self.config.macd_fast, slow=self.config.macd_slow, signal=self.config.macd_signal, append=True)
+        df.ta.macd(
+            fast=self.config.macd_fast,
+            slow=self.config.macd_slow,
+            signal=self.config.macd_signal,
+            append=True,
+        )
 
         bbp = df[f"BBP_{self.config.bb_length}_{self.config.bb_std}"]
-        macdh = df[f"MACDh_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"]
-        macd = df[f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"]
+        macdh = df[
+            f"MACDh_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
+        macd = df[
+            f"MACD_{self.config.macd_fast}_{self.config.macd_slow}_{self.config.macd_signal}"
+        ]
 
         # Generate signal
-        long_condition = (bbp < self.config.bb_long_threshold) & (macdh > 0) & (macd < 0)
-        short_condition = (bbp > self.config.bb_short_threshold) & (macdh < 0) & (macd > 0)
+        long_condition = (
+            (bbp < self.config.bb_long_threshold) & (macdh > 0) & (macd < 0)
+        )
+        short_condition = (
+            (bbp > self.config.bb_short_threshold) & (macdh < 0) & (macd > 0)
+        )
 
         df["signal"] = 0
         df.loc[long_condition, "signal"] = 1

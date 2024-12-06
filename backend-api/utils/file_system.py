@@ -34,9 +34,19 @@ class FileSystemUtil:
         :param directory: The directory to list files from.
         :return: List of file names in the directory.
         """
-        excluded_files = ["__init__.py", "__pycache__", ".DS_Store", ".dockerignore", ".gitignore"]
+        excluded_files = [
+            "__init__.py",
+            "__pycache__",
+            ".DS_Store",
+            ".dockerignore",
+            ".gitignore",
+        ]
         dir_path = os.path.join(self.base_path, directory)
-        return [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f)) and f not in excluded_files]
+        return [
+            f
+            for f in os.listdir(dir_path)
+            if os.path.isfile(os.path.join(dir_path, f)) and f not in excluded_files
+        ]
 
     def list_folders(self, directory: str) -> List[str]:
         """
@@ -45,7 +55,9 @@ class FileSystemUtil:
         :return: List of folder names in the directory.
         """
         dir_path = os.path.join(self.base_path, directory)
-        return [d for d in os.listdir(dir_path) if os.path.isdir(os.path.join(dir_path, d))]
+        return [
+            d for d in os.listdir(dir_path) if os.path.isdir(os.path.join(dir_path, d))
+        ]
 
     def create_folder(self, directory: str, folder_name: str):
         """
@@ -109,7 +121,9 @@ class FileSystemUtil:
         """
         return os.path.exists(os.path.join(self.base_path, path))
 
-    def add_file(self, directory: str, file_name: str, content: str, override: bool = False):
+    def add_file(
+        self, directory: str, file_name: str, content: str, override: bool = False
+    ):
         """
         Adds a file to a specified directory.
         :param directory: The directory to add the file to.
@@ -119,7 +133,9 @@ class FileSystemUtil:
         """
         file_path = os.path.join(self.base_path, directory, file_name)
         if not override and os.path.exists(file_path):
-            raise FileExistsError(f"File '{file_name}' already exists in '{directory}'.")
+            raise FileExistsError(
+                f"File '{file_name}' already exists in '{directory}'."
+            )
         with open(file_path, "w") as file:
             file.write(content)
 
@@ -175,7 +191,9 @@ class FileSystemUtil:
                 if issubclass(cls, BaseClientModel) and cls is not BaseClientModel:
                     return cls
         except Exception as e:
-            print(f"Error loading script class: {e}")  # Handle or log the error appropriately
+            print(
+                f"Error loading script class: {e}"
+            )  # Handle or log the error appropriately
         return None
 
     @staticmethod
@@ -210,7 +228,9 @@ class FileSystemUtil:
         for archived_instance in archived_instances:
             db_path = os.path.join(archived_path, archived_instance, "data")
             archived_databases += [
-                os.path.join(db_path, db_file) for db_file in os.listdir(db_path) if db_file.endswith(".sqlite")
+                os.path.join(db_path, db_file)
+                for db_file in os.listdir(db_path)
+                if db_file.endswith(".sqlite")
             ]
         return archived_databases
 
@@ -220,12 +240,16 @@ class FileSystemUtil:
             checkpoints = [
                 os.path.join(dir_path, f)
                 for f in os.listdir(dir_path)
-                if os.path.isfile(os.path.join(dir_path, f)) and f.startswith("checkpoint") and f.endswith(".sqlite")
+                if os.path.isfile(os.path.join(dir_path, f))
+                and f.startswith("checkpoint")
+                and f.endswith(".sqlite")
             ]
         else:
             checkpoints = [
                 f
                 for f in os.listdir(dir_path)
-                if os.path.isfile(os.path.join(dir_path, f)) and f.startswith("checkpoint") and f.endswith(".sqlite")
+                if os.path.isfile(os.path.join(dir_path, f))
+                and f.startswith("checkpoint")
+                and f.endswith(".sqlite")
             ]
         return checkpoints

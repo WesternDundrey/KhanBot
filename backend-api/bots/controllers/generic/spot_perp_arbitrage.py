@@ -2,11 +2,26 @@ from decimal import Decimal
 from typing import Dict, List, Set
 
 from hummingbot.client.config.config_data_types import ClientFieldData
-from hummingbot.core.data_type.common import OrderType, PositionAction, PriceType, TradeType
+from hummingbot.core.data_type.common import (
+    OrderType,
+    PositionAction,
+    PriceType,
+    TradeType,
+)
 from hummingbot.data_feed.candles_feed.data_types import CandlesConfig
-from hummingbot.strategy_v2.controllers.controller_base import ControllerBase, ControllerConfigBase
-from hummingbot.strategy_v2.executors.position_executor.data_types import PositionExecutorConfig, TripleBarrierConfig
-from hummingbot.strategy_v2.models.executor_actions import CreateExecutorAction, ExecutorAction, StopExecutorAction
+from hummingbot.strategy_v2.controllers.controller_base import (
+    ControllerBase,
+    ControllerConfigBase,
+)
+from hummingbot.strategy_v2.executors.position_executor.data_types import (
+    PositionExecutorConfig,
+    TripleBarrierConfig,
+)
+from hummingbot.strategy_v2.models.executor_actions import (
+    CreateExecutorAction,
+    ExecutorAction,
+    StopExecutorAction,
+)
 from pydantic import Field
 
 
@@ -14,24 +29,41 @@ class SpotPerpArbitrageConfig(ControllerConfigBase):
     controller_name: str = "spot_perp_arbitrage"
     candles_config: List[CandlesConfig] = []
     spot_connector: str = Field(
-        default="binance", client_data=ClientFieldData(prompt=lambda e: "Enter the spot connector: ", prompt_on_new=True)
+        default="binance",
+        client_data=ClientFieldData(
+            prompt=lambda e: "Enter the spot connector: ", prompt_on_new=True
+        ),
     )
     spot_trading_pair: str = Field(
-        default="DOGE-USDT", client_data=ClientFieldData(prompt=lambda e: "Enter the spot trading pair: ", prompt_on_new=True)
+        default="DOGE-USDT",
+        client_data=ClientFieldData(
+            prompt=lambda e: "Enter the spot trading pair: ", prompt_on_new=True
+        ),
     )
     perp_connector: str = Field(
         default="binance_perpetual",
-        client_data=ClientFieldData(prompt=lambda e: "Enter the perp connector: ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda e: "Enter the perp connector: ", prompt_on_new=True
+        ),
     )
     perp_trading_pair: str = Field(
-        default="DOGE-USDT", client_data=ClientFieldData(prompt=lambda e: "Enter the perp trading pair: ", prompt_on_new=True)
+        default="DOGE-USDT",
+        client_data=ClientFieldData(
+            prompt=lambda e: "Enter the perp trading pair: ", prompt_on_new=True
+        ),
     )
     profitability: Decimal = Field(
-        default=0.002, client_data=ClientFieldData(prompt=lambda e: "Enter the minimum profitability: ", prompt_on_new=True)
+        default=0.002,
+        client_data=ClientFieldData(
+            prompt=lambda e: "Enter the minimum profitability: ", prompt_on_new=True
+        ),
     )
     position_size_quote: float = Field(
         default=50,
-        client_data=ClientFieldData(prompt=lambda e: "Enter the position size in quote currency: ", prompt_on_new=True),
+        client_data=ClientFieldData(
+            prompt=lambda e: "Enter the position size in quote currency: ",
+            prompt_on_new=True,
+        ),
     )
 
     def update_markets(self, markets: Dict[str, Set[str]]) -> Dict[str, Set[str]]:
@@ -102,17 +134,31 @@ class SpotPerpArbitrage(ControllerBase):
             position_action=PositionAction.OPEN,
         ).percent
 
-        estimated_trade_pnl_pct = (connector_perp_price - connector_spot_price) / connector_spot_price
-        return estimated_trade_pnl_pct - estimated_fees_spot_connector - estimated_fees_perp_connector
+        estimated_trade_pnl_pct = (
+            connector_perp_price - connector_spot_price
+        ) / connector_spot_price
+        return (
+            estimated_trade_pnl_pct
+            - estimated_fees_spot_connector
+            - estimated_fees_perp_connector
+        )
 
     def is_active_arbitrage(self):
-        executors = self.filter_executors(executors=self.executors_info, filter_func=lambda e: e.is_active)
+        executors = self.filter_executors(
+            executors=self.executors_info, filter_func=lambda e: e.is_active
+        )
         return len(executors) > 0
 
     def current_pnl_pct(self):
-        executors = self.filter_executors(executors=self.executors_info, filter_func=lambda e: e.is_active)
+        executors = self.filter_executors(
+            executors=self.executors_info, filter_func=lambda e: e.is_active
+        )
         filled_amount = sum(e.filled_amount_quote for e in executors)
-        return sum(e.net_pnl_quote for e in executors) / filled_amount if filled_amount > 0 else 0
+        return (
+            sum(e.net_pnl_quote for e in executors) / filled_amount
+            if filled_amount > 0
+            else 0
+        )
 
     async def update_processed_data(self):
         self.processed_data = {
@@ -129,9 +175,14 @@ class SpotPerpArbitrage(ControllerBase):
 
     def create_new_arbitrage_actions(self):
         create_actions = []
-        if not self.processed_data["active_arbitrage"] and self.processed_data["profitability"] > self.config.profitability:
+        if (
+            not self.processed_data["active_arbitrage"]
+            and self.processed_data["profitability"] > self.config.profitability
+        ):
             mid_price = self.market_data_provider.get_price_by_type(
-                self.config.spot_connector, self.config.spot_trading_pair, PriceType.MidPrice
+                self.config.spot_connector,
+                self.config.spot_trading_pair,
+                PriceType.MidPrice,
             )
             create_actions.append(
                 CreateExecutorAction(
@@ -142,7 +193,9 @@ class SpotPerpArbitrage(ControllerBase):
                         trading_pair=self.config.spot_trading_pair,
                         side=TradeType.BUY,
                         amount=Decimal(self.config.position_size_quote) / mid_price,
-                        triple_barrier_config=TripleBarrierConfig(open_order_type=OrderType.MARKET),
+                        triple_barrier_config=TripleBarrierConfig(
+                            open_order_type=OrderType.MARKET
+                        ),
                     ),
                 )
             )
@@ -155,7 +208,9 @@ class SpotPerpArbitrage(ControllerBase):
                         trading_pair=self.config.perp_trading_pair,
                         side=TradeType.SELL,
                         amount=Decimal(self.config.position_size_quote) / mid_price,
-                        triple_barrier_config=TripleBarrierConfig(open_order_type=OrderType.MARKET),
+                        triple_barrier_config=TripleBarrierConfig(
+                            open_order_type=OrderType.MARKET
+                        ),
                     ),
                 )
             )
@@ -164,9 +219,15 @@ class SpotPerpArbitrage(ControllerBase):
     def stop_arbitrage_actions(self):
         stop_actions = []
         if self.processed_data["current_pnl"] > 0.003:
-            executors = self.filter_executors(executors=self.executors_info, filter_func=lambda e: e.is_active)
+            executors = self.filter_executors(
+                executors=self.executors_info, filter_func=lambda e: e.is_active
+            )
             for executor in executors:
-                stop_actions.append(StopExecutorAction(controller_id=self.config.id, executor_id=executor.id))
+                stop_actions.append(
+                    StopExecutorAction(
+                        controller_id=self.config.id, executor_id=executor.id
+                    )
+                )
 
     def to_format_status(self) -> List[str]:
         return [

@@ -10,7 +10,9 @@ from services.docker_service import DockerManager
 router = APIRouter(tags=["Docker Management"])
 docker_manager = DockerManager()
 bot_archiver = BotArchiver(
-    os.environ.get("AWS_API_KEY"), os.environ.get("AWS_SECRET_KEY"), os.environ.get("S3_DEFAULT_BUCKET_NAME")
+    os.environ.get("AWS_API_KEY"),
+    os.environ.get("AWS_SECRET_KEY"),
+    os.environ.get("S3_DEFAULT_BUCKET_NAME"),
 )
 
 
@@ -22,7 +24,12 @@ async def is_docker_running():
 @router.get("/available-images/{image_name}")
 async def available_images(image_name: str):
     available_images = docker_manager.get_available_images()
-    image_tags = [tag for image in available_images["images"] for tag in image.tags if image_name in tag]
+    image_tags = [
+        tag
+        for image in available_images["images"]
+        for tag in image.tags
+        if image_name in tag
+    ]
     return {"available_images": image_tags}
 
 
@@ -42,7 +49,9 @@ async def clean_exited_containers():
 
 
 @router.post("/remove-container/{container_name}")
-async def remove_container(container_name: str, archive_locally: bool = True, s3_bucket: str = None):
+async def remove_container(
+    container_name: str, archive_locally: bool = True, s3_bucket: str = None
+):
     # Remove the container
     response = docker_manager.remove_container(container_name)
     # Form the instance directory path correctly
@@ -52,7 +61,9 @@ async def remove_container(container_name: str, archive_locally: bool = True, s3
         if archive_locally:
             bot_archiver.archive_locally(container_name, instance_dir)
         else:
-            bot_archiver.archive_and_upload(container_name, instance_dir, bucket_name=s3_bucket)
+            bot_archiver.archive_and_upload(
+                container_name, instance_dir, bucket_name=s3_bucket
+            )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

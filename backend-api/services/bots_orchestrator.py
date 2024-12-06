@@ -11,7 +11,9 @@ from hbotrc.spec import TopicSpecs
 class HummingbotPerformanceListener(BotListener):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        topic_prefix = TopicSpecs.PREFIX.format(namespace=self._ns, instance_id=self._bot_id)
+        topic_prefix = TopicSpecs.PREFIX.format(
+            namespace=self._ns, instance_id=self._bot_id
+        )
         self._performance_topic = f"{topic_prefix}/performance"
         self._bot_performance = {}
         self._bot_error_logs = deque(maxlen=100)
@@ -69,7 +71,8 @@ class BotsManager:
         return [
             container.name
             for container in self.docker_client.containers.list()
-            if container.status == "running" and self.hummingbot_containers_fiter(container)
+            if container.status == "running"
+            and self.hummingbot_containers_fiter(container)
         ]
 
     def start_update_active_bots_loop(self):
@@ -125,7 +128,9 @@ class BotsManager:
 
     def import_strategy_for_bot(self, bot_name, strategy, **kwargs):
         if bot_name in self.active_bots:
-            return self.active_bots[bot_name]["broker_client"].import_strategy(strategy, **kwargs)
+            return self.active_bots[bot_name]["broker_client"].import_strategy(
+                strategy, **kwargs
+            )
 
     def configure_bot(self, bot_name, params, **kwargs):
         if bot_name in self.active_bots:
@@ -141,8 +146,15 @@ class BotsManager:
         for controller, performance in controllers_performance.items():
             try:
                 # Check if all the metrics are numeric
-                _ = sum(metric for key, metric in performance.items() if key != "close_type_counts")
-                cleaned_performance[controller] = {"status": "running", "performance": performance}
+                _ = sum(
+                    metric
+                    for key, metric in performance.items()
+                    if key != "close_type_counts"
+                )
+                cleaned_performance[controller] = {
+                    "status": "running",
+                    "performance": performance,
+                }
             except Exception as e:
                 cleaned_performance[controller] = {
                     "status": "error",
@@ -161,10 +173,17 @@ class BotsManager:
             try:
                 broker_listener = self.active_bots[bot_name]["broker_listener"]
                 controllers_performance = broker_listener.get_bot_performance()
-                performance = self.determine_controller_performance(controllers_performance)
+                performance = self.determine_controller_performance(
+                    controllers_performance
+                )
                 error_logs = broker_listener.get_bot_error_logs()
                 general_logs = broker_listener.get_bot_general_logs()
                 status = "running" if len(performance) > 0 else "stopped"
-                return {"status": status, "performance": performance, "error_logs": error_logs, "general_logs": general_logs}
+                return {
+                    "status": status,
+                    "performance": performance,
+                    "error_logs": error_logs,
+                    "general_logs": general_logs,
+                }
             except Exception as e:
                 return {"status": "error", "error": str(e)}

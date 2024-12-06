@@ -7,7 +7,20 @@ from hummingbot.core.data_type.common import TradeType
 from hummingbot.strategy_v2.models.base import RunnableStatus
 from hummingbot.strategy_v2.models.executors import CloseType
 from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
-from sqlalchemy import create_engine, insert, text, MetaData, Table, Column, VARCHAR, INT, FLOAT, Integer, String, Float
+from sqlalchemy import (
+    create_engine,
+    insert,
+    text,
+    MetaData,
+    Table,
+    Column,
+    VARCHAR,
+    INT,
+    FLOAT,
+    Integer,
+    String,
+    Float,
+)
 from sqlalchemy.orm import sessionmaker
 
 
@@ -16,7 +29,9 @@ class HummingbotDatabase:
         self.db_name = os.path.basename(db_path)
         self.db_path = db_path
         self.db_path = f"sqlite:///{os.path.join(db_path)}"
-        self.engine = create_engine(self.db_path, connect_args={"check_same_thread": False})
+        self.engine = create_engine(
+            self.db_path, connect_args={"check_same_thread": False}
+        )
         self.session_maker = sessionmaker(bind=self.engine)
 
     @staticmethod
@@ -36,7 +51,13 @@ class HummingbotDatabase:
         controller_status = self._get_table_status(self.get_controllers_data)
         general_status = all(
             status == "Correct"
-            for status in [trade_fill_status, orders_status, order_status_status, executors_status, controller_status]
+            for status in [
+                trade_fill_status,
+                orders_status,
+                order_status_status,
+                executors_status,
+                controller_status,
+            ]
         )
         status = {
             "db_name": self.db_name,
@@ -67,8 +88,12 @@ class HummingbotDatabase:
             query = "SELECT * FROM TradeFill"
             trade_fills = pd.read_sql_query(text(query), session.connection())
             trade_fills[float_cols] = trade_fills[float_cols] / 1e6
-            trade_fills["cum_fees_in_quote"] = trade_fills.groupby(groupers)["trade_fee_in_quote"].cumsum()
-            trade_fills["trade_fee"] = trade_fills.groupby(groupers)["cum_fees_in_quote"].diff()
+            trade_fills["cum_fees_in_quote"] = trade_fills.groupby(groupers)[
+                "trade_fee_in_quote"
+            ].cumsum()
+            trade_fills["trade_fee"] = trade_fills.groupby(groupers)[
+                "cum_fees_in_quote"
+            ].diff()
             # trade_fills["timestamp"] = pd.to_datetime(trade_fills["timestamp"], unit="ms")
         return trade_fills
 
@@ -94,7 +119,9 @@ class HummingbotDatabase:
 class ETLPerformance:
     def __init__(self, db_path: str):
         self.db_path = f"sqlite:///{os.path.join(db_path)}"
-        self.engine = create_engine(self.db_path, connect_args={"check_same_thread": False})
+        self.engine = create_engine(
+            self.db_path, connect_args={"check_same_thread": False}
+        )
         self.session_maker = sessionmaker(bind=self.engine)
         self.metadata = MetaData()
 
@@ -181,7 +208,12 @@ class ETLPerformance:
 
     @property
     def tables(self):
-        return [self.executors_table, self.trade_fill_table, self.orders_table, self.controllers_table]
+        return [
+            self.executors_table,
+            self.trade_fill_table,
+            self.orders_table,
+            self.controllers_table,
+        ]
 
     def create_tables(self):
         with self.engine.connect():
@@ -315,21 +347,41 @@ class PerformanceDataSource:
     @property
     def executors_df(self):
         executors = pd.DataFrame(self.executors_dict)
-        executors["custom_info"] = executors["custom_info"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
-        executors["config"] = executors["config"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
-        executors["timestamp"] = executors["timestamp"].apply(lambda x: self.ensure_timestamp_in_seconds(x))
-        executors["close_timestamp"] = executors["close_timestamp"].apply(lambda x: self.ensure_timestamp_in_seconds(x))
-        executors["trading_pair"] = executors["config"].apply(lambda x: x["trading_pair"])
+        executors["custom_info"] = executors["custom_info"].apply(
+            lambda x: json.loads(x) if isinstance(x, str) else x
+        )
+        executors["config"] = executors["config"].apply(
+            lambda x: json.loads(x) if isinstance(x, str) else x
+        )
+        executors["timestamp"] = executors["timestamp"].apply(
+            lambda x: self.ensure_timestamp_in_seconds(x)
+        )
+        executors["close_timestamp"] = executors["close_timestamp"].apply(
+            lambda x: self.ensure_timestamp_in_seconds(x)
+        )
+        executors["trading_pair"] = executors["config"].apply(
+            lambda x: x["trading_pair"]
+        )
         executors["exchange"] = executors["config"].apply(lambda x: x["connector_name"])
         executors["level_id"] = executors["config"].apply(lambda x: x.get("level_id"))
-        executors["bep"] = executors["custom_info"].apply(lambda x: x["current_position_average_price"])
-        executors["order_ids"] = executors["custom_info"].apply(lambda x: x.get("order_ids"))
+        executors["bep"] = executors["custom_info"].apply(
+            lambda x: x["current_position_average_price"]
+        )
+        executors["order_ids"] = executors["custom_info"].apply(
+            lambda x: x.get("order_ids")
+        )
         executors["close_price"] = executors["custom_info"].apply(
             lambda x: x.get("close_price", x["current_position_average_price"])
         )
-        executors["sl"] = executors["config"].apply(lambda x: x.get("stop_loss")).fillna(0)
-        executors["tp"] = executors["config"].apply(lambda x: x.get("take_profit")).fillna(0)
-        executors["tl"] = executors["config"].apply(lambda x: x.get("time_limit")).fillna(0)
+        executors["sl"] = (
+            executors["config"].apply(lambda x: x.get("stop_loss")).fillna(0)
+        )
+        executors["tp"] = (
+            executors["config"].apply(lambda x: x.get("take_profit")).fillna(0)
+        )
+        executors["tl"] = (
+            executors["config"].apply(lambda x: x.get("time_limit")).fillna(0)
+        )
         return executors
 
     @property
@@ -359,12 +411,20 @@ class PerformanceDataSource:
         return executor_values
 
     def apply_special_data_types(self, executors):
-        executors["status"] = executors["status"].apply(lambda x: self.get_enum_by_value(RunnableStatus, int(x)))
-        executors["side"] = executors["config"].apply(lambda x: self.get_enum_by_value(TradeType, int(x["side"])))
-        executors["close_type"] = executors["close_type"].apply(lambda x: self.get_enum_by_value(CloseType, int(x)))
+        executors["status"] = executors["status"].apply(
+            lambda x: self.get_enum_by_value(RunnableStatus, int(x))
+        )
+        executors["side"] = executors["config"].apply(
+            lambda x: self.get_enum_by_value(TradeType, int(x["side"]))
+        )
+        executors["close_type"] = executors["close_type"].apply(
+            lambda x: self.get_enum_by_value(CloseType, int(x))
+        )
         executors["close_type_name"] = executors["close_type"].apply(lambda x: x.name)
         executors["datetime"] = pd.to_datetime(executors.timestamp, unit="s")
-        executors["close_datetime"] = pd.to_datetime(executors["close_timestamp"], unit="s")
+        executors["close_datetime"] = pd.to_datetime(
+            executors["close_timestamp"], unit="s"
+        )
         return executors
 
     @staticmethod

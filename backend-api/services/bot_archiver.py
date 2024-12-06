@@ -6,9 +6,18 @@ from botocore.exceptions import NoCredentialsError
 
 
 class BotArchiver:
-    def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, default_bucket_name=None):
+    def __init__(
+        self,
+        aws_access_key_id=None,
+        aws_secret_access_key=None,
+        default_bucket_name=None,
+    ):
         if aws_access_key_id and aws_secret_access_key:
-            self.s3 = boto3.client("s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+            self.s3 = boto3.client(
+                "s3",
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
             self.default_bucket_name = default_bucket_name
         else:
             self.s3 = None
