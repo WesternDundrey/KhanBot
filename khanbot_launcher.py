@@ -8,10 +8,11 @@ from pathlib import Path
 import socket
 import psutil
 import time
+from importlib.metadata import distributions
 
 class SingleInstanceChecker:
-    def __init__(self, port=19999):  # Change is here - port parameter in init
-        self.port = port  # Set the port attribute first
+    def __init__(self, port=19999):
+        self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
     def is_running(self):
@@ -58,26 +59,67 @@ class KhanBotLauncher:
         self.detail_label = ttk.Label(self.frame, text="", wraplength=350)
         self.detail_label.grid(row=3, column=0, pady=10)
 
+    def update_status(self, status, progress, detail=""):
+        self.status_label["text"] = status
+        self.progress["value"] = progress
+        if detail:
+            self.detail_label["text"] = detail
+        self.root.update()
+
+    def get_required_packages(self):
+        packages = set()
+        
+        # Read backend requirements
+        try:
+            with open('backend-api/requirements.txt', 'r') as f:
+                packages.update(line.strip() for line in f if line.strip() and not line.startswith('#'))
+        except FileNotFoundError:
+            pass
+
+        # Read dashboard requirements
+        try:
+            with open('dashboard/requirements.txt', 'r') as f:
+                packages.update(line.strip() for line in f if line.strip() and not line.startswith('#'))
+        except FileNotFoundError:
+            pass
+            
+        # Add essential packages
+        essential_packages = ['streamlit', 'fastapi', 'uvicorn', 'python-dotenv']
+        packages.update(essential_packages)
+        
+        return packages
+
     def check_dependencies(self):
         try:
-            self.status_label["text"] = "Checking conda environment..."
-            self.progress["value"] = 10
+            self.update_status("Installing required packages...", 10)
             
-            # Check if required packages are installed
-            self.detail_label["text"] = "Checking required packages..."
+            # Install packages directly
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', 
+                                'streamlit', 'fastapi', 'uvicorn', 'python-dotenv'])
             
-            # Use current Python environment since we're already in the conda env
-            try:
-                import streamlit
-                import fastapi
-                import uvicorn
-                self.detail_label["text"] = "Required packages found"
-            except ImportError as e:
-                self.detail_label["text"] = f"Installing missing package: {str(e)}"
-                subprocess.run(['pip', 'install', 'streamlit', 'fastapi', 'uvicorn'], check=True)
+            self.update_status("Checking additional dependencies...", 30)
             
-            self.progress["value"] = 50
-            self.start_services()
+            # Get required packages
+            required_packages = self.get_required_packages()
+            
+            # Check installed packages
+            installed_packages = {dist.metadata['Name'] for dist in distributions()}
+            
+            # Find missing packages
+            missing_packages = [pkg for pkg in required_packages if pkg.split('==')[0] not in installed_packages]
+            
+            if missing_packages:
+                self.update_status("Installing missing packages...", 50, 
+                                 f"Installing: {', '.join(missing_packages)}")
+                
+                # Install missing packages
+                try:
+                    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
+                except subprocess.CalledProcessError as e:
+                    raise Exception(f"Failed to install packages: {str(e)}")
+            
+            self.update_status("All dependencies installed", 70, "Starting services...")
+            self.root.after(1000, self.start_services)
             
         except Exception as e:
             self.handle_error("Dependency check failed", e)
@@ -85,8 +127,7 @@ class KhanBotLauncher:
     def start_services(self):
         try:
             # Start backend
-            self.status_label["text"] = "Starting Backend Service..."
-            self.progress["value"] = 70
+            self.update_status("Starting Backend Service...", 80)
             
             backend_process = subprocess.Popen(
                 ['bash', 'launch_backend.sh'],
@@ -99,8 +140,7 @@ class KhanBotLauncher:
             time.sleep(3)
             
             # Start dashboard
-            self.status_label["text"] = "Starting Dashboard Service..."
-            self.progress["value"] = 90
+            self.update_status("Starting Dashboard Service...", 90)
             
             dashboard_process = subprocess.Popen(
                 ['bash', 'launch_dashboard.sh'],
@@ -109,22 +149,18 @@ class KhanBotLauncher:
             )
             self.processes.append(dashboard_process)
             
-            # Wait for dashboard to initialize
-            time.sleep(3)
-            
             # Open browser
-            self.launch_browser()
+            self.root.after(3000, self.launch_browser)
             
         except Exception as e:
             self.handle_error("Failed to start services", e)
 
     def launch_browser(self):
         try:
-            self.status_label["text"] = "Opening KhanBot..."
-            self.progress["value"] = 100
+            self.update_status("Opening KhanBot...", 100)
             webbrowser.open('http://localhost:8501')
-            self.status_label["text"] = "KhanBot is running"
-            self.detail_label["text"] = "Access the dashboard at http://localhost:8501"
+            self.update_status("KhanBot is running", 100, 
+                             "Access the dashboard at http://localhost:8501")
         except Exception as e:
             self.handle_error("Failed to open dashboard", e)
 
