@@ -15,12 +15,12 @@ file_system = FileSystemUtil()
 
 @router.get("/list-scripts", response_model=List[str])
 async def list_scripts():
-    return file_system.list_files('scripts')
+    return file_system.list_files("scripts")
 
 
 @router.get("/list-scripts-configs", response_model=List[str])
 async def list_scripts_configs():
-    return file_system.list_files('conf/scripts')
+    return file_system.list_files("conf/scripts")
 
 
 @router.get("/script-config/{script_name}", response_model=dict)
@@ -41,16 +41,16 @@ async def get_script_config(script_name: str):
 
 @router.get("/list-controllers", response_model=dict)
 async def list_controllers():
-    directional_trading_controllers = [file for file in file_system.list_files('controllers/directional_trading') if
-                                       file != "__init__.py"]
-    market_making_controllers = [file for file in file_system.list_files('controllers/market_making') if
-                                 file != "__init__.py"]
+    directional_trading_controllers = [
+        file for file in file_system.list_files("controllers/directional_trading") if file != "__init__.py"
+    ]
+    market_making_controllers = [file for file in file_system.list_files("controllers/market_making") if file != "__init__.py"]
     return {"directional_trading": directional_trading_controllers, "market_making": market_making_controllers}
 
 
 @router.get("/list-controllers-configs", response_model=List[str])
 async def list_controllers_configs():
-    return file_system.list_files('conf/controllers')
+    return file_system.list_files("conf/controllers")
 
 
 @router.get("/controller-config/{controller_name}", response_model=dict)
@@ -62,7 +62,7 @@ async def get_controller_config(controller_name: str):
 @router.get("/all-controller-configs", response_model=List[dict])
 async def get_all_controller_configs():
     configs = []
-    for controller in file_system.list_files('conf/controllers'):
+    for controller in file_system.list_files("conf/controllers"):
         config = file_system.read_yaml_file(f"bots/conf/controllers/{controller}")
         configs.append(config)
     return configs
@@ -94,7 +94,7 @@ async def update_controller_config(bot_name: str, controller_id: str, config: Di
 @router.post("/add-script", status_code=status.HTTP_201_CREATED)
 async def add_script(script: Script, override: bool = False):
     try:
-        file_system.add_file('scripts', script.name + '.py', script.content, override)
+        file_system.add_file("scripts", script.name + ".py", script.content, override)
         return {"message": "Script added successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -104,7 +104,7 @@ async def add_script(script: Script, override: bool = False):
 async def upload_script(config_file: UploadFile = File(...), override: bool = False):
     try:
         contents = await config_file.read()
-        file_system.add_file('scripts', config_file.filename, contents.decode(), override)
+        file_system.add_file("scripts", config_file.filename, contents.decode(), override)
         return {"message": "Script uploaded successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -115,7 +115,7 @@ async def add_script_config(config: ScriptConfig):
     try:
         yaml_content = yaml.dump(config.content)
 
-        file_system.add_file('conf/scripts', config.name + '.yml', yaml_content, override=True)
+        file_system.add_file("conf/scripts", config.name + ".yml", yaml_content, override=True)
         return {"message": "Script configuration uploaded successfully."}
     except Exception as e:  # Consider more specific exception handling
         raise HTTPException(status_code=400, detail=str(e))
@@ -125,7 +125,7 @@ async def add_script_config(config: ScriptConfig):
 async def upload_script_config(config_file: UploadFile = File(...), override: bool = False):
     try:
         contents = await config_file.read()
-        file_system.add_file('conf/scripts', config_file.filename, contents.decode(), override)
+        file_system.add_file("conf/scripts", config_file.filename, contents.decode(), override)
         return {"message": "Script configuration uploaded successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -136,7 +136,7 @@ async def add_controller_config(config: ScriptConfig):
     try:
         yaml_content = yaml.dump(config.content)
 
-        file_system.add_file('conf/controllers', config.name + '.yml', yaml_content, override=True)
+        file_system.add_file("conf/controllers", config.name + ".yml", yaml_content, override=True)
         return {"message": "Controller configuration uploaded successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -146,7 +146,7 @@ async def add_controller_config(config: ScriptConfig):
 async def upload_controller_config(config_file: UploadFile = File(...), override: bool = False):
     try:
         contents = await config_file.read()
-        file_system.add_file('conf/controllers', config_file.filename, contents.decode(), override)
+        file_system.add_file("conf/controllers", config_file.filename, contents.decode(), override)
         return {"message": "Controller configuration uploaded successfully."}
     except FileExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -155,7 +155,7 @@ async def upload_controller_config(config_file: UploadFile = File(...), override
 @router.post("/delete-controller-config", status_code=status.HTTP_200_OK)
 async def delete_controller_config(config_name: str):
     try:
-        file_system.delete_file('conf/controllers', config_name)
+        file_system.delete_file("conf/controllers", config_name)
         return {"message": f"Controller configuration {config_name} deleted successfully."}
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -164,7 +164,7 @@ async def delete_controller_config(config_name: str):
 @router.post("/delete-script-config", status_code=status.HTTP_200_OK)
 async def delete_script_config(config_name: str):
     try:
-        file_system.delete_file('conf/scripts', config_name)
+        file_system.delete_file("conf/scripts", config_name)
         return {"message": f"Script configuration {config_name} deleted successfully."}
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -173,8 +173,8 @@ async def delete_script_config(config_name: str):
 @router.post("/delete-all-controller-configs", status_code=status.HTTP_200_OK)
 async def delete_all_controller_configs():
     try:
-        for file in file_system.list_files('conf/controllers'):
-            file_system.delete_file('conf/controllers', file)
+        for file in file_system.list_files("conf/controllers"):
+            file_system.delete_file("conf/controllers", file)
         return {"message": "All controller configurations deleted successfully."}
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -183,8 +183,8 @@ async def delete_all_controller_configs():
 @router.post("/delete-all-script-configs", status_code=status.HTTP_200_OK)
 async def delete_all_script_configs():
     try:
-        for file in file_system.list_files('conf/scripts'):
-            file_system.delete_file('conf/scripts', file)
+        for file in file_system.list_files("conf/scripts"):
+            file_system.delete_file("conf/scripts", file)
         return {"message": "All script configurations deleted successfully."}
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

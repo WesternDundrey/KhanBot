@@ -16,10 +16,7 @@ candles_factory = CandlesFactory()
 directional_trading_backtesting = DirectionalTradingBacktesting()
 market_making_backtesting = MarketMakingBacktesting()
 
-BACKTESTING_ENGINES = {
-    "directional_trading": directional_trading_backtesting,
-    "market_making": market_making_backtesting
-}
+BACKTESTING_ENGINES = {"directional_trading": directional_trading_backtesting, "market_making": market_making_backtesting}
 
 
 class BacktestingConfig(BaseModel):
@@ -37,20 +34,22 @@ async def run_backtesting(backtesting_config: BacktestingConfig):
             controller_config = BacktestingEngineBase.get_controller_config_instance_from_yml(
                 config_path=backtesting_config.config,
                 controllers_conf_dir_path=CONTROLLERS_PATH,
-                controllers_module=CONTROLLERS_MODULE
+                controllers_module=CONTROLLERS_MODULE,
             )
         else:
             controller_config = BacktestingEngineBase.get_controller_config_instance_from_dict(
-                config_data=backtesting_config.config,
-                controllers_module=CONTROLLERS_MODULE
+                config_data=backtesting_config.config, controllers_module=CONTROLLERS_MODULE
             )
         backtesting_engine = BACKTESTING_ENGINES.get(controller_config.controller_type)
         if not backtesting_engine:
             raise ValueError(f"Backtesting engine for controller type {controller_config.controller_type} not found.")
         backtesting_results = await backtesting_engine.run_backtesting(
-            controller_config=controller_config, trade_cost=backtesting_config.trade_cost,
-            start=int(backtesting_config.start_time), end=int(backtesting_config.end_time),
-            backtesting_resolution=backtesting_config.backtesting_resolution)
+            controller_config=controller_config,
+            trade_cost=backtesting_config.trade_cost,
+            start=int(backtesting_config.start_time),
+            end=int(backtesting_config.end_time),
+            backtesting_resolution=backtesting_config.backtesting_resolution,
+        )
         processed_data = backtesting_results["processed_data"]["features"].fillna(0)
         executors_info = [e.to_dict() for e in backtesting_results["executors"]]
         backtesting_results["processed_data"] = processed_data.to_dict()

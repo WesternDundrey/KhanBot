@@ -31,8 +31,9 @@ class BackendAPISecurity(Security):
     def decrypt_all(cls, account_name: str = "master_account"):
         cls._secure_configs.clear()
         cls._decryption_done.clear()
-        encrypted_files = [file for file in cls.fs_util.list_files(directory=f"{account_name}/connectors") if
-                           file.endswith(".yml")]
+        encrypted_files = [
+            file for file in cls.fs_util.list_files(directory=f"{account_name}/connectors") if file.endswith(".yml")
+        ]
         for file in encrypted_files:
             path = Path(cls.fs_util.base_path + f"/{account_name}/connectors/" + file)
             cls.decrypt_connector_config(path)

@@ -35,18 +35,12 @@ async def read_databases(db_paths: List[str] = None):
                     "trade_fill": json.dumps(db.get_trade_fills().to_dict()),
                     "executors": json.dumps(db.get_executors_data().to_dict()),
                     "order_status": json.dumps(db.get_order_status().to_dict()),
-                    "controllers": json.dumps(db.get_controllers_data().to_dict())
-                }
+                    "controllers": json.dumps(db.get_controllers_data().to_dict()),
+                },
             }
         except Exception as e:
             print(f"Error reading database {db_path}: {str(e)}")
-            db_content = {
-                "db_name": "",
-                "db_path": db_path,
-                "healthy": False,
-                "status": db.status,
-                "tables": {}
-            }
+            db_content = {"db_name": "", "db_path": db_path, "healthy": False, "status": db.status, "tables": {}}
         dbs.append(db_content)
     return dbs
 
@@ -93,7 +87,7 @@ async def load_checkpoint(checkpoint_path: str):
             "executors": json.dumps(executor.to_dict()),
             "orders": json.dumps(order.to_dict()),
             "trade_fill": json.dumps(trade_fill.to_dict()),
-            "controllers": json.dumps(controllers.to_dict())
+            "controllers": json.dumps(controllers.to_dict()),
         }
         return checkpoint_data
     except Exception as e:

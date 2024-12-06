@@ -8,8 +8,7 @@ from botocore.exceptions import NoCredentialsError
 class BotArchiver:
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, default_bucket_name=None):
         if aws_access_key_id and aws_secret_access_key:
-            self.s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
-                                   aws_secret_access_key=aws_secret_access_key)
+            self.s3 = boto3.client("s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
             self.default_bucket_name = default_bucket_name
         else:
             self.s3 = None
@@ -23,7 +22,7 @@ class BotArchiver:
             bucket_name = self.default_bucket_name
 
         archive_name = f"{instance_name}_archive.tar.gz"
-        archive_path = os.path.join('bots', 'archived', archive_name)
+        archive_path = os.path.join("bots", "archived", archive_name)
         self.compress_directory(instance_dir, archive_path)
 
         try:
@@ -36,15 +35,15 @@ class BotArchiver:
 
     @staticmethod
     def compress_directory(source_dir, output_path):
-        shutil.make_archive(output_path.replace('.tar.gz', ''), 'gztar', source_dir)
+        shutil.make_archive(output_path.replace(".tar.gz", ""), "gztar", source_dir)
         print(f"Compressed {source_dir} into {output_path}")
 
     def archive_locally(self, instance_name, instance_dir, compress=False):
         if compress:
             archive_name = f"{instance_name}_archive.tar.gz"
-            archive_path = os.path.join('bots', 'archived', archive_name)
+            archive_path = os.path.join("bots", "archived", archive_name)
             self.compress_directory(instance_dir, archive_path)
             shutil.rmtree(instance_dir)  # Remove the instance directory
         else:
-            archive_path = os.path.join('bots', 'archived', instance_name)
+            archive_path = os.path.join("bots", "archived", instance_name)
             shutil.move(instance_dir, archive_path)

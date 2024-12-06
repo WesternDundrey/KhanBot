@@ -17,6 +17,7 @@ class FileSystemUtil:
     FileSystemUtil provides utility functions for file and directory management,
     as well as dynamic loading of script configurations.
     """
+
     base_path: str = "bots"  # Default base path
 
     def __init__(self, base_path: Optional[str] = None):
@@ -119,7 +120,7 @@ class FileSystemUtil:
         file_path = os.path.join(self.base_path, directory, file_name)
         if not override and os.path.exists(file_path):
             raise FileExistsError(f"File '{file_name}' already exists in '{directory}'.")
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             file.write(content)
 
     def append_to_file(self, directory: str, file_name: str, content: str):
@@ -130,7 +131,7 @@ class FileSystemUtil:
         :param content: The content to append to the file.
         """
         file_path = os.path.join(self.base_path, directory, file_name)
-        with open(file_path, 'a') as file:
+        with open(file_path, "a") as file:
             file.write(content)
 
     @staticmethod
@@ -140,7 +141,7 @@ class FileSystemUtil:
         :param data_dict: The dictionary to dump.
         :param filename: The file to dump the dictionary into.
         """
-        with open(filename, 'w') as file:
+        with open(filename, "w") as file:
             yaml.dump(data_dict, file)
 
     @staticmethod
@@ -150,7 +151,7 @@ class FileSystemUtil:
         :param file_path: The path to the YAML file.
         :return: Dictionary containing the YAML file data.
         """
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             data = yaml.safe_load(file)
         return data
 
@@ -208,17 +209,23 @@ class FileSystemUtil:
         archived_databases = []
         for archived_instance in archived_instances:
             db_path = os.path.join(archived_path, archived_instance, "data")
-            archived_databases += [os.path.join(db_path, db_file) for db_file in os.listdir(db_path)
-                                   if db_file.endswith(".sqlite")]
+            archived_databases += [
+                os.path.join(db_path, db_file) for db_file in os.listdir(db_path) if db_file.endswith(".sqlite")
+            ]
         return archived_databases
 
     def list_checkpoints(self, full_path: bool):
         dir_path = os.path.join(self.base_path, "data")
         if full_path:
-            checkpoints = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if
-                           os.path.isfile(os.path.join(dir_path, f))
-                           and f.startswith("checkpoint") and f.endswith(".sqlite")]
+            checkpoints = [
+                os.path.join(dir_path, f)
+                for f in os.listdir(dir_path)
+                if os.path.isfile(os.path.join(dir_path, f)) and f.startswith("checkpoint") and f.endswith(".sqlite")
+            ]
         else:
-            checkpoints = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))
-                           and f.startswith("checkpoint") and f.endswith(".sqlite")]
+            checkpoints = [
+                f
+                for f in os.listdir(dir_path)
+                if os.path.isfile(os.path.join(dir_path, f)) and f.startswith("checkpoint") and f.endswith(".sqlite")
+            ]
         return checkpoints

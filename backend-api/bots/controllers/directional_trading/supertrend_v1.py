@@ -16,13 +16,15 @@ class SuperTrendConfig(DirectionalTradingControllerConfigBase):
     candles_connector: Optional[str] = Field(default=None)
     candles_trading_pair: Optional[str] = Field(default=None)
     interval: str = Field(default="3m")
-    length: int = Field(default=20, client_data=ClientFieldData(prompt=lambda mi: "Enter the supertrend length: ",
-                                                                prompt_on_new=True))
-    multiplier: float = Field(default=4.0,
-                              client_data=ClientFieldData(prompt=lambda mi: "Enter the supertrend multiplier: ",
-                                                          prompt_on_new=True))
-    percentage_threshold: float = Field(default=0.01, client_data=ClientFieldData(
-        prompt=lambda mi: "Enter the percentage threshold: ", prompt_on_new=True))
+    length: int = Field(
+        default=20, client_data=ClientFieldData(prompt=lambda mi: "Enter the supertrend length: ", prompt_on_new=True)
+    )
+    multiplier: float = Field(
+        default=4.0, client_data=ClientFieldData(prompt=lambda mi: "Enter the supertrend multiplier: ", prompt_on_new=True)
+    )
+    percentage_threshold: float = Field(
+        default=0.01, client_data=ClientFieldData(prompt=lambda mi: "Enter the percentage threshold: ", prompt_on_new=True)
+    )
 
     @validator("candles_connector", pre=True, always=True)
     def set_candles_connector(cls, v, values):
@@ -42,34 +44,39 @@ class SuperTrend(DirectionalTradingControllerBase):
         self.config = config
         self.max_records = config.length + 10
         if len(self.config.candles_config) == 0:
-            self.config.candles_config = [CandlesConfig(
-                connector=config.candles_connector,
-                trading_pair=config.candles_trading_pair,
-                interval=config.interval,
-                max_records=self.max_records
-            )]
+            self.config.candles_config = [
+                CandlesConfig(
+                    connector=config.candles_connector,
+                    trading_pair=config.candles_trading_pair,
+                    interval=config.interval,
+                    max_records=self.max_records,
+                )
+            ]
         super().__init__(config, *args, **kwargs)
 
     async def update_processed_data(self):
-        df = self.market_data_provider.get_candles_df(connector_name=self.config.candles_connector,
-                                                      trading_pair=self.config.candles_trading_pair,
-                                                      interval=self.config.interval,
-                                                      max_records=self.max_records)
+        df = self.market_data_provider.get_candles_df(
+            connector_name=self.config.candles_connector,
+            trading_pair=self.config.candles_trading_pair,
+            interval=self.config.interval,
+            max_records=self.max_records,
+        )
         # Add indicators
         df.ta.supertrend(length=self.config.length, multiplier=self.config.multiplier, append=True)
-        df["percentage_distance"] = abs(df["close"] - df[f"SUPERT_{self.config.length}_{self.config.multiplier}"]) / df[
-            "close"]
+        df["percentage_distance"] = abs(df["close"] - df[f"SUPERT_{self.config.length}_{self.config.multiplier}"]) / df["close"]
 
         # Generate long and short conditions
         long_condition = (df[f"SUPERTd_{self.config.length}_{self.config.multiplier}"] == 1) & (
-                df["percentage_distance"] < self.config.percentage_threshold)
+            df["percentage_distance"] < self.config.percentage_threshold
+        )
         short_condition = (df[f"SUPERTd_{self.config.length}_{self.config.multiplier}"] == -1) & (
-                df["percentage_distance"] < self.config.percentage_threshold)
+            df["percentage_distance"] < self.config.percentage_threshold
+        )
 
         # Choose side
-        df['signal'] = 0
-        df.loc[long_condition, 'signal'] = 1
-        df.loc[short_condition, 'signal'] = -1
+        df["signal"] = 0
+        df.loc[long_condition, "signal"] = 1
+        df.loc[short_condition, "signal"] = -1
 
         # Update processed data
         self.processed_data["signal"] = df["signal"].iloc[-1]
