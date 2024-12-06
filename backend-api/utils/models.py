@@ -7,6 +7,7 @@ from pydantic import SecretStr
 class BackendAPIConfigAdapter(ClientConfigAdapter):
     def _encrypt_secrets(self, conf_dict: Dict[str, Any]):
         from utils.security import BackendAPISecurity
+
         for attr, value in conf_dict.items():
             attr_type = self._hb_config.__fields__[attr].type_
             if attr_type == SecretStr:
@@ -15,6 +16,7 @@ class BackendAPIConfigAdapter(ClientConfigAdapter):
 
     def _decrypt_secrets(self, conf_dict: Dict[str, Any]):
         from utils.security import BackendAPISecurity
+
         for attr, value in conf_dict.items():
             attr_type = self._hb_config.__fields__[attr].type_
             if attr_type == SecretStr:
@@ -23,6 +25,7 @@ class BackendAPIConfigAdapter(ClientConfigAdapter):
 
     def _decrypt_all_internal_secrets(self):
         from utils.security import BackendAPISecurity
+
         for traversal_item in self.traverse():
             if traversal_item.type_ == SecretStr:
                 encrypted_value = traversal_item.value

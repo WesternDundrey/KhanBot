@@ -11,11 +11,8 @@ from hbotrc.spec import TopicSpecs
 class HummingbotPerformanceListener(BotListener):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        topic_prefix = TopicSpecs.PREFIX.format(
-            namespace=self._ns,
-            instance_id=self._bot_id
-        )
-        self._performance_topic = f'{topic_prefix}/performance'
+        topic_prefix = TopicSpecs.PREFIX.format(namespace=self._ns, instance_id=self._bot_id)
+        self._performance_topic = f"{topic_prefix}/performance"
         self._bot_performance = {}
         self._bot_error_logs = deque(maxlen=100)
         self._bot_general_logs = deque(maxlen=100)
@@ -32,8 +29,9 @@ class HummingbotPerformanceListener(BotListener):
 
     def _init_endpoints(self):
         super()._init_endpoints()
-        self.performance_report_sub = self.create_subscriber(topic=self._performance_topic,
-                                                             on_message=self._update_bot_performance)
+        self.performance_report_sub = self.create_subscriber(
+            topic=self._performance_topic, on_message=self._update_bot_performance
+        )
 
     def _update_bot_performance(self, msg):
         for controller_id, performance_report in msg.items():
@@ -68,8 +66,11 @@ class BotsManager:
             return False
 
     def get_active_containers(self):
-        return [container.name for container in self.docker_client.containers.list()
-                if container.status == 'running' and self.hummingbot_containers_fiter(container)]
+        return [
+            container.name
+            for container in self.docker_client.containers.list()
+            if container.status == "running" and self.hummingbot_containers_fiter(container)
+        ]
 
     def start_update_active_bots_loop(self):
         self._update_bots_task = asyncio.create_task(self.update_active_bots())
@@ -90,16 +91,23 @@ class BotsManager:
             # Add new bots or update existing ones
             for bot in active_hbot_containers:
                 if bot not in self.active_bots:
-                    hbot_listener = HummingbotPerformanceListener(host=self.broker_host, port=self.broker_port,
-                                                                  username=self.broker_username,
-                                                                  password=self.broker_password,
-                                                                  bot_id=bot)
+                    hbot_listener = HummingbotPerformanceListener(
+                        host=self.broker_host,
+                        port=self.broker_port,
+                        username=self.broker_username,
+                        password=self.broker_password,
+                        bot_id=bot,
+                    )
                     hbot_listener.start()
                     self.active_bots[bot] = {
                         "bot_name": bot,
-                        "broker_client": BotCommands(host=self.broker_host, port=self.broker_port,
-                                                     username=self.broker_username, password=self.broker_password,
-                                                     bot_id=bot),
+                        "broker_client": BotCommands(
+                            host=self.broker_host,
+                            port=self.broker_port,
+                            username=self.broker_username,
+                            password=self.broker_password,
+                            bot_id=bot,
+                        ),
                         "broker_listener": hbot_listener,
                     }
             await asyncio.sleep(sleep_time)
@@ -134,10 +142,7 @@ class BotsManager:
             try:
                 # Check if all the metrics are numeric
                 _ = sum(metric for key, metric in performance.items() if key != "close_type_counts")
-                cleaned_performance[controller] = {
-                    "status": "running",
-                    "performance": performance
-                }
+                cleaned_performance[controller] = {"status": "running", "performance": performance}
             except Exception as e:
                 cleaned_performance[controller] = {
                     "status": "error",
@@ -160,14 +165,6 @@ class BotsManager:
                 error_logs = broker_listener.get_bot_error_logs()
                 general_logs = broker_listener.get_bot_general_logs()
                 status = "running" if len(performance) > 0 else "stopped"
-                return {
-                    "status": status,
-                    "performance": performance,
-                    "error_logs": error_logs,
-                    "general_logs": general_logs
-                }
+                return {"status": status, "performance": performance, "error_logs": error_logs, "general_logs": general_logs}
             except Exception as e:
-                return {
-                    "status": "error",
-                    "error": str(e)
-                }
+                return {"status": "error", "error": str(e)}

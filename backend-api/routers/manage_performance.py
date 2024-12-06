@@ -16,7 +16,7 @@ async def get_performance_results(payload: Dict[str, Any]):
     try:
         backtesting_engine = BacktestingEngineBase()
         executor_info_list = data_source.executor_info_list
-        performance_results["results"] = backtesting_engine.summarize_results(executor_info_list    )
+        performance_results["results"] = backtesting_engine.summarize_results(executor_info_list)
         results = performance_results["results"]
         results["sharpe_ratio"] = results["sharpe_ratio"] if results["sharpe_ratio"] is not None else 0
         return {

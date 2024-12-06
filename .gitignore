@@ -45,6 +45,3 @@ backend-api/bots/archived/
 data/candles/
 data/backtesting/
 
-# Credentials and sensitive data
-credentials.yml
-**/credentials/

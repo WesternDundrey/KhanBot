@@ -9,8 +9,9 @@ from services.docker_service import DockerManager
 
 router = APIRouter(tags=["Docker Management"])
 docker_manager = DockerManager()
-bot_archiver = BotArchiver(os.environ.get("AWS_API_KEY"), os.environ.get("AWS_SECRET_KEY"),
-                           os.environ.get("S3_DEFAULT_BUCKET_NAME"))
+bot_archiver = BotArchiver(
+    os.environ.get("AWS_API_KEY"), os.environ.get("AWS_SECRET_KEY"), os.environ.get("S3_DEFAULT_BUCKET_NAME")
+)
 
 
 @router.get("/is-docker-running")
@@ -45,7 +46,7 @@ async def remove_container(container_name: str, archive_locally: bool = True, s3
     # Remove the container
     response = docker_manager.remove_container(container_name)
     # Form the instance directory path correctly
-    instance_dir = os.path.join('bots', 'instances', container_name)
+    instance_dir = os.path.join("bots", "instances", container_name)
     try:
         # Archive the data
         if archive_locally:

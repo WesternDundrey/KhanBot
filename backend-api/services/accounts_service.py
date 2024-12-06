@@ -26,11 +26,13 @@ class AccountsService:
     update the balances of each account.
     """
 
-    def __init__(self,
-                 update_account_state_interval_minutes: int = 1,
-                 default_quote: str = "USDT",
-                 account_history_file: str = "account_state_history.json",
-                 account_history_dump_interval_minutes: int = 1):
+    def __init__(
+        self,
+        update_account_state_interval_minutes: int = 1,
+        default_quote: str = "USDT",
+        account_history_file: str = "account_state_history.json",
+        account_history_dump_interval_minutes: int = 1,
+    ):
         # TODO: Add database to store the balances of each account each time it is updated.
         self.secrets_manager = ETHKeyFileSecretManger(CONFIG_PASSWORD)
         self.accounts = {}
@@ -99,10 +101,8 @@ class AccountsService:
                 logging.error(f"Error dumping account state: {e}")
             finally:
                 now = datetime.now()
-                next_log_time = (now + timedelta(minutes=self.account_history_dump_interval)).replace(second=0,
-                                                                                                      microsecond=0)
-                next_log_time = next_log_time - timedelta(
-                    minutes=next_log_time.minute % self.account_history_dump_interval)
+                next_log_time = (now + timedelta(minutes=self.account_history_dump_interval)).replace(second=0, microsecond=0)
+                next_log_time = next_log_time - timedelta(minutes=next_log_time.minute % self.account_history_dump_interval)
                 sleep_duration = (next_log_time - now).total_seconds()
                 await asyncio.sleep(sleep_duration)
 
@@ -223,8 +223,11 @@ class AccountsService:
             for connector_name, connector in connectors.items():
                 tokens_info = []
                 try:
-                    balances = [{"token": key, "units": value} for key, value in connector.get_all_balances().items() if
-                                value != Decimal("0") and key not in BANNED_TOKENS]
+                    balances = [
+                        {"token": key, "units": value}
+                        for key, value in connector.get_all_balances().items()
+                        if value != Decimal("0") and key not in BANNED_TOKENS
+                    ]
                     unique_tokens = [balance["token"] for balance in balances]
                     trading_pairs = [self.get_default_market(token) for token in unique_tokens if "USD" not in token]
                     last_traded_prices = await self._safe_get_last_traded_prices(connector, trading_pairs)
@@ -235,17 +238,18 @@ class AccountsService:
                         else:
                             market = self.get_default_market(balance["token"])
                             price = Decimal(last_traded_prices.get(market, 0))
-                        tokens_info.append({
-                            "token": balance["token"],
-                            "units": float(balance["units"]),
-                            "price": float(price),
-                            "value": float(price * balance["units"]),
-                            "available_units": float(connector.get_available_balance(balance["token"]))
-                        })
+                        tokens_info.append(
+                            {
+                                "token": balance["token"],
+                                "units": float(balance["units"]),
+                                "price": float(price),
+                                "value": float(price * balance["units"]),
+                                "available_units": float(connector.get_available_balance(balance["token"])),
+                            }
+                        )
                     self.account_state_update_event.set()
                 except Exception as e:
-                    logging.error(
-                        f"Error updating balances for connector {connector_name} in account {account_name}: {e}")
+                    logging.error(f"Error updating balances for connector {connector_name} in account {account_name}: {e}")
                 self.accounts_state[account_name][connector_name] = tokens_info
 
     async def _safe_get_last_traded_prices(self, connector, trading_pairs, timeout=5):
@@ -312,7 +316,7 @@ class AccountsService:
         List all the accounts that are connected to the trading system.
         :return: List of accounts.
         """
-        return file_system.list_folders('credentials')
+        return file_system.list_folders("credentials")
 
     def list_credentials(self, account_name: str):
         """
@@ -321,8 +325,7 @@ class AccountsService:
         :return: List of credentials.
         """
         try:
-            return [file for file in file_system.list_files(f'credentials/{account_name}/connectors') if
-                    file.endswith('.yml')]
+            return [file for file in file_system.list_files(f"credentials/{account_name}/connectors") if file.endswith(".yml")]
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
 
@@ -349,8 +352,8 @@ class AccountsService:
         if account_name in self.accounts:
             raise HTTPException(status_code=400, detail="Account already exists.")
         files_to_copy = ["conf_client.yml", "conf_fee_overrides.yml", "hummingbot_logs.yml", ".password_verification"]
-        file_system.create_folder('credentials', account_name)
-        file_system.create_folder(f'credentials/{account_name}', "connectors")
+        file_system.create_folder("credentials", account_name)
+        file_system.create_folder(f"credentials/{account_name}", "connectors")
         for file in files_to_copy:
             file_system.copy_file(f"credentials/master_account/{file}", f"credentials/{account_name}/{file}")
         self.accounts[account_name] = {}
@@ -362,6 +365,6 @@ class AccountsService:
         :param account_name:
         :return:
         """
-        file_system.delete_folder('credentials', account_name)
+        file_system.delete_folder("credentials", account_name)
         self.accounts.pop(account_name)
         self.accounts_state.pop(account_name)

@@ -7,7 +7,7 @@ from hummingbot.core.data_type.common import TradeType
 from hummingbot.strategy_v2.models.base import RunnableStatus
 from hummingbot.strategy_v2.models.executors import CloseType
 from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
-from sqlalchemy import create_engine, insert, text, MetaData, Table, Column, VARCHAR, INT, FLOAT,  Integer, String, Float
+from sqlalchemy import create_engine, insert, text, MetaData, Table, Column, VARCHAR, INT, FLOAT, Integer, String, Float
 from sqlalchemy.orm import sessionmaker
 
 
@@ -15,8 +15,8 @@ class HummingbotDatabase:
     def __init__(self, db_path: str):
         self.db_name = os.path.basename(db_path)
         self.db_path = db_path
-        self.db_path = f'sqlite:///{os.path.join(db_path)}'
-        self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
+        self.db_path = f"sqlite:///{os.path.join(db_path)}"
+        self.engine = create_engine(self.db_path, connect_args={"check_same_thread": False})
         self.session_maker = sessionmaker(bind=self.engine)
 
     @staticmethod
@@ -34,16 +34,19 @@ class HummingbotDatabase:
         order_status_status = self._get_table_status(self.get_order_status)
         executors_status = self._get_table_status(self.get_executors_data)
         controller_status = self._get_table_status(self.get_controllers_data)
-        general_status = all(status == "Correct" for status in
-                             [trade_fill_status, orders_status, order_status_status, executors_status, controller_status])
-        status = {"db_name": self.db_name,
-                  "db_path": self.db_path,
-                  "trade_fill": trade_fill_status,
-                  "orders": orders_status,
-                  "order_status": order_status_status,
-                  "executors": executors_status,
-                  "general_status": general_status
-                  }
+        general_status = all(
+            status == "Correct"
+            for status in [trade_fill_status, orders_status, order_status_status, executors_status, controller_status]
+        )
+        status = {
+            "db_name": self.db_name,
+            "db_path": self.db_path,
+            "trade_fill": trade_fill_status,
+            "orders": orders_status,
+            "order_status": order_status_status,
+            "executors": executors_status,
+            "general_status": general_status,
+        }
         return status
 
     def get_orders(self):
@@ -89,87 +92,91 @@ class HummingbotDatabase:
 
 
 class ETLPerformance:
-    def __init__(self,
-                 db_path: str):
-        self.db_path = f'sqlite:///{os.path.join(db_path)}'
-        self.engine = create_engine(self.db_path, connect_args={'check_same_thread': False})
+    def __init__(self, db_path: str):
+        self.db_path = f"sqlite:///{os.path.join(db_path)}"
+        self.engine = create_engine(self.db_path, connect_args={"check_same_thread": False})
         self.session_maker = sessionmaker(bind=self.engine)
         self.metadata = MetaData()
 
     @property
     def executors_table(self):
-        return Table('executors',
-                     MetaData(),
-                     Column('id', String),
-                     Column('timestamp', Integer),
-                     Column('type', String),
-                     Column('close_type', Integer),
-                     Column('close_timestamp', Integer),
-                     Column('status', String),
-                     Column('config', String),
-                     Column('net_pnl_pct', Float),
-                     Column('net_pnl_quote', Float),
-                     Column('cum_fees_quote', Float),
-                     Column('filled_amount_quote', Float),
-                     Column('is_active', Integer),
-                     Column('is_trading', Integer),
-                     Column('custom_info', String),
-                     Column('controller_id', String))
+        return Table(
+            "executors",
+            MetaData(),
+            Column("id", String),
+            Column("timestamp", Integer),
+            Column("type", String),
+            Column("close_type", Integer),
+            Column("close_timestamp", Integer),
+            Column("status", String),
+            Column("config", String),
+            Column("net_pnl_pct", Float),
+            Column("net_pnl_quote", Float),
+            Column("cum_fees_quote", Float),
+            Column("filled_amount_quote", Float),
+            Column("is_active", Integer),
+            Column("is_trading", Integer),
+            Column("custom_info", String),
+            Column("controller_id", String),
+        )
 
     @property
     def trade_fill_table(self):
         return Table(
-            'trades', MetaData(),
-            Column('config_file_path', VARCHAR(255)),
-            Column('strategy', VARCHAR(255)),
-            Column('market', VARCHAR(255)),
-            Column('symbol', VARCHAR(255)),
-            Column('base_asset', VARCHAR(255)),
-            Column('quote_asset', VARCHAR(255)),
-            Column('timestamp', INT),
-            Column('order_id', VARCHAR(255)),
-            Column('trade_type', VARCHAR(255)),
-            Column('order_type', VARCHAR(255)),
-            Column('price', FLOAT),
-            Column('amount', FLOAT),
-            Column('leverage', INT),
-            Column('trade_fee', VARCHAR(255)),
-            Column('trade_fee_in_quote', FLOAT),
-            Column('exchange_trade_id', VARCHAR(255)),
-            Column('position', VARCHAR(255)),
+            "trades",
+            MetaData(),
+            Column("config_file_path", VARCHAR(255)),
+            Column("strategy", VARCHAR(255)),
+            Column("market", VARCHAR(255)),
+            Column("symbol", VARCHAR(255)),
+            Column("base_asset", VARCHAR(255)),
+            Column("quote_asset", VARCHAR(255)),
+            Column("timestamp", INT),
+            Column("order_id", VARCHAR(255)),
+            Column("trade_type", VARCHAR(255)),
+            Column("order_type", VARCHAR(255)),
+            Column("price", FLOAT),
+            Column("amount", FLOAT),
+            Column("leverage", INT),
+            Column("trade_fee", VARCHAR(255)),
+            Column("trade_fee_in_quote", FLOAT),
+            Column("exchange_trade_id", VARCHAR(255)),
+            Column("position", VARCHAR(255)),
         )
 
     @property
     def orders_table(self):
         return Table(
-            'orders', MetaData(),
-            Column('client_order_id', VARCHAR(255)),
-            Column('config_file_path', VARCHAR(255)),
-            Column('strategy', VARCHAR(255)),
-            Column('market', VARCHAR(255)),
-            Column('symbol', VARCHAR(255)),
-            Column('base_asset', VARCHAR(255)),
-            Column('quote_asset', VARCHAR(255)),
-            Column('creation_timestamp', INT),
-            Column('order_type', VARCHAR(255)),
-            Column('amount', FLOAT),
-            Column('leverage', INT),
-            Column('price', FLOAT),
-            Column('last_status', VARCHAR(255)),
-            Column('last_update_timestamp', INT),
-            Column('exchange_order_id', VARCHAR(255)),
-            Column('position', VARCHAR(255)),
+            "orders",
+            MetaData(),
+            Column("client_order_id", VARCHAR(255)),
+            Column("config_file_path", VARCHAR(255)),
+            Column("strategy", VARCHAR(255)),
+            Column("market", VARCHAR(255)),
+            Column("symbol", VARCHAR(255)),
+            Column("base_asset", VARCHAR(255)),
+            Column("quote_asset", VARCHAR(255)),
+            Column("creation_timestamp", INT),
+            Column("order_type", VARCHAR(255)),
+            Column("amount", FLOAT),
+            Column("leverage", INT),
+            Column("price", FLOAT),
+            Column("last_status", VARCHAR(255)),
+            Column("last_update_timestamp", INT),
+            Column("exchange_order_id", VARCHAR(255)),
+            Column("position", VARCHAR(255)),
         )
 
     @property
     def controllers_table(self):
         return Table(
-            'controllers', MetaData(),
-            Column('id', VARCHAR(255)),
-            Column('controller_id', INT),
-            Column('timestamp', FLOAT),
-            Column('type', VARCHAR(255)),
-            Column('config', String),
+            "controllers",
+            MetaData(),
+            Column("id", VARCHAR(255)),
+            Column("controller_id", INT),
+            Column("timestamp", FLOAT),
+            Column("type", VARCHAR(255)),
+            Column("config", String),
         )
 
     @property
@@ -209,7 +216,8 @@ class ETLPerformance:
                     is_active=row["is_active"],
                     is_trading=row["is_trading"],
                     custom_info=row["custom_info"],
-                    controller_id=row["controller_id"])
+                    controller_id=row["controller_id"],
+                )
                 conn.execute(ins)
                 conn.commit()
 
@@ -307,18 +315,18 @@ class PerformanceDataSource:
     @property
     def executors_df(self):
         executors = pd.DataFrame(self.executors_dict)
-        executors["custom_info"] = executors["custom_info"].apply(
-            lambda x: json.loads(x) if isinstance(x, str) else x)
+        executors["custom_info"] = executors["custom_info"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
         executors["config"] = executors["config"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
         executors["timestamp"] = executors["timestamp"].apply(lambda x: self.ensure_timestamp_in_seconds(x))
-        executors["close_timestamp"] = executors["close_timestamp"].apply(
-            lambda x: self.ensure_timestamp_in_seconds(x))
+        executors["close_timestamp"] = executors["close_timestamp"].apply(lambda x: self.ensure_timestamp_in_seconds(x))
         executors["trading_pair"] = executors["config"].apply(lambda x: x["trading_pair"])
         executors["exchange"] = executors["config"].apply(lambda x: x["connector_name"])
         executors["level_id"] = executors["config"].apply(lambda x: x.get("level_id"))
         executors["bep"] = executors["custom_info"].apply(lambda x: x["current_position_average_price"])
         executors["order_ids"] = executors["custom_info"].apply(lambda x: x.get("order_ids"))
-        executors["close_price"] = executors["custom_info"].apply(lambda x: x.get("close_price", x["current_position_average_price"]))
+        executors["close_price"] = executors["custom_info"].apply(
+            lambda x: x.get("close_price", x["current_position_average_price"])
+        )
         executors["sl"] = executors["config"].apply(lambda x: x.get("stop_loss")).fillna(0)
         executors["tp"] = executors["config"].apply(lambda x: x.get("take_profit")).fillna(0)
         executors["tl"] = executors["config"].apply(lambda x: x.get("time_limit")).fillna(0)
@@ -344,7 +352,7 @@ class PerformanceDataSource:
                 is_active=row["is_active"],
                 is_trading=row["is_trading"],
                 custom_info=row["custom_info"],
-                controller_id=row["controller_id"]
+                controller_id=row["controller_id"],
             )
             executor_to_append.custom_info["side"] = row["side"]
             executor_values.append(executor_to_append)
@@ -388,4 +396,5 @@ class PerformanceDataSource:
             return timestamp_int
         else:
             raise ValueError(
-                "Timestamp is not in a recognized format. Must be in seconds, milliseconds, microseconds or nanoseconds.")
+                "Timestamp is not in a recognized format. Must be in seconds, milliseconds, microseconds or nanoseconds."
+            )
