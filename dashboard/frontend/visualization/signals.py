@@ -7,17 +7,29 @@ from frontend.visualization import theme
 def get_signal_traces(buy_signals, sell_signals):
     tech_colors = theme.get_color_scheme()
     traces = [
-        go.Scatter(x=buy_signals.index, y=buy_signals['close'], mode='markers',
-                   marker=dict(color=tech_colors['buy_signal'], size=10, symbol='triangle-up'),
-                   name='Buy Signal'),
-        go.Scatter(x=sell_signals.index, y=sell_signals['close'], mode='markers',
-                   marker=dict(color=tech_colors['sell_signal'], size=10, symbol='triangle-down'),
-                   name='Sell Signal')
+        go.Scatter(
+            x=buy_signals.index,
+            y=buy_signals["close"],
+            mode="markers",
+            marker=dict(color=tech_colors["buy_signal"], size=10, symbol="triangle-up"),
+            name="Buy Signal",
+        ),
+        go.Scatter(
+            x=sell_signals.index,
+            y=sell_signals["close"],
+            mode="markers",
+            marker=dict(
+                color=tech_colors["sell_signal"], size=10, symbol="triangle-down"
+            ),
+            name="Sell Signal",
+        ),
     ]
     return traces
 
 
-def get_bollinger_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold):
+def get_bollinger_v1_signal_traces(
+    df, bb_length, bb_std, bb_long_threshold, bb_short_threshold
+):
     # Add Bollinger Bands
     candles = df.copy()
     candles.ta.bbands(length=bb_length, std=bb_std, append=True)
@@ -29,8 +41,16 @@ def get_bollinger_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_
     return get_signal_traces(buy_signals, sell_signals)
 
 
-def get_macdbb_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_short_threshold, macd_fast, macd_slow,
-                                macd_signal):
+def get_macdbb_v1_signal_traces(
+    df,
+    bb_length,
+    bb_std,
+    bb_long_threshold,
+    bb_short_threshold,
+    macd_fast,
+    macd_slow,
+    macd_signal,
+):
     # Add Bollinger Bands
     df.ta.bbands(length=bb_length, std=bb_std, append=True)
     # Add MACD
@@ -49,10 +69,18 @@ def get_macdbb_v1_signal_traces(df, bb_length, bb_std, bb_long_threshold, bb_sho
 def get_supertrend_v1_signal_traces(df, length, multiplier, percentage_threshold):
     # Add indicators
     df.ta.supertrend(length=length, multiplier=multiplier, append=True)
-    df["percentage_distance"] = abs(df["close"] - df[f"SUPERT_{length}_{multiplier}"]) / df["close"]
+    df["percentage_distance"] = (
+        abs(df["close"] - df[f"SUPERT_{length}_{multiplier}"]) / df["close"]
+    )
 
     # Generate long and short conditions
-    buy_signals = df[(df[f"SUPERTd_{length}_{multiplier}"] == 1) & (df["percentage_distance"] < percentage_threshold)]
-    sell_signals = df[(df[f"SUPERTd_{length}_{multiplier}"] == -1) & (df["percentage_distance"] < percentage_threshold)]
+    buy_signals = df[
+        (df[f"SUPERTd_{length}_{multiplier}"] == 1)
+        & (df["percentage_distance"] < percentage_threshold)
+    ]
+    sell_signals = df[
+        (df[f"SUPERTd_{length}_{multiplier}"] == -1)
+        & (df["percentage_distance"] < percentage_threshold)
+    ]
 
     return get_signal_traces(buy_signals, sell_signals)

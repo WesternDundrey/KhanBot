@@ -31,12 +31,12 @@ def remove_directory(directory: str):
 
 
 def dump_dict_to_yaml(data_dict, filename):
-    with open(filename, 'w') as file:
+    with open(filename, "w") as file:
         yaml.dump(data_dict, file)
 
 
 def read_yaml_file(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         data = yaml.safe_load(file)
     return data
 
@@ -54,7 +54,7 @@ def save_file(name: str, content: str, path: str):
 
 def load_file(path: str) -> str:
     try:
-        with open(path, 'r') as file:
+        with open(path, "r") as file:
             contents = file.read()
         return contents
     except FileNotFoundError:
@@ -89,7 +89,7 @@ def get_yml_files_from_directory(directory: str) -> list:
 def load_controllers(path):
     controllers = {}
     for filename in os.listdir(path):
-        if filename.endswith('.py') and "__init__" not in filename:
+        if filename.endswith(".py") and "__init__" not in filename:
             module_name = filename[:-3]  # strip the .py to get the module name
             controllers[module_name] = {"module": module_name}
             file_path = os.path.join(path, filename)
@@ -97,15 +97,27 @@ def load_controllers(path):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             for name, cls in inspect.getmembers(module, inspect.isclass):
-                if issubclass(cls, DirectionalTradingControllerBase) and cls is not DirectionalTradingControllerBase:
+                if (
+                    issubclass(cls, DirectionalTradingControllerBase)
+                    and cls is not DirectionalTradingControllerBase
+                ):
                     controllers[module_name]["class"] = cls
                     controllers[module_name]["type"] = "directional_trading"
-                if issubclass(cls, DirectionalTradingControllerConfigBase) and cls is not DirectionalTradingControllerConfigBase:
+                if (
+                    issubclass(cls, DirectionalTradingControllerConfigBase)
+                    and cls is not DirectionalTradingControllerConfigBase
+                ):
                     controllers[module_name]["config"] = cls
-                if issubclass(cls, MarketMakingControllerBase) and cls is not MarketMakingControllerBase:
+                if (
+                    issubclass(cls, MarketMakingControllerBase)
+                    and cls is not MarketMakingControllerBase
+                ):
                     controllers[module_name]["class"] = cls
                     controllers[module_name]["type"] = "market_making"
-                if issubclass(cls, MarketMakingControllerConfigBase) and cls is not MarketMakingControllerConfigBase:
+                if (
+                    issubclass(cls, MarketMakingControllerConfigBase)
+                    and cls is not MarketMakingControllerConfigBase
+                ):
                     controllers[module_name]["config"] = cls
     return controllers
 
@@ -123,7 +135,9 @@ def get_bots_data_paths():
                     bots_data_paths[parent_folder] = os.path.join(dirpath, dirname)
             if "dashboard" in bots_data_paths:
                 del bots_data_paths["dashboard"]
-    data_sources = {key: value for key, value in bots_data_paths.items() if value is not None}
+    data_sources = {
+        key: value for key, value in bots_data_paths.items() if value is not None
+    }
     return data_sources
 
 

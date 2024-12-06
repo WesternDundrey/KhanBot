@@ -11,9 +11,16 @@ class Card(Dashboard.Item):
     )
 
     def __call__(self, content):
-        with mui.Card(key=self._key,
-                      sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"},
-                      elevation=1):
+        with mui.Card(
+            key=self._key,
+            sx={
+                "display": "flex",
+                "flexDirection": "column",
+                "borderRadius": 3,
+                "overflow": "hidden",
+            },
+            elevation=1,
+        ):
             mui.CardHeader(
                 title="Shrimp and Chorizo Paella",
                 subheader="September 14, 2016",
