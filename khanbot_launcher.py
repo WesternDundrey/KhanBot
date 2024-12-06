@@ -8,7 +8,6 @@ from pathlib import Path
 import socket
 import psutil
 import time
-from importlib.metadata import distributions
 
 class SingleInstanceChecker:
     def __init__(self, port=19999):
@@ -66,58 +65,42 @@ class KhanBotLauncher:
             self.detail_label["text"] = detail
         self.root.update()
 
-    def get_required_packages(self):
-        packages = set()
-        
-        # Read backend requirements
+    def install_requirements(self, requirements_file, description):
+        """Install requirements from a requirements.txt file."""
         try:
-            with open('backend-api/requirements.txt', 'r') as f:
-                packages.update(line.strip() for line in f if line.strip() and not line.startswith('#'))
-        except FileNotFoundError:
-            pass
-
-        # Read dashboard requirements
-        try:
-            with open('dashboard/requirements.txt', 'r') as f:
-                packages.update(line.strip() for line in f if line.strip() and not line.startswith('#'))
-        except FileNotFoundError:
-            pass
-            
-        # Add essential packages
-        essential_packages = ['streamlit', 'fastapi', 'uvicorn', 'python-dotenv']
-        packages.update(essential_packages)
-        
-        return packages
+            self.update_status(f"Installing {description} requirements...", 30)
+            process = subprocess.run(
+                [sys.executable, '-m', 'pip', 'install', '-r', requirements_file],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return True
+        except subprocess.CalledProcessError as e:
+            self.detail_label["text"] = f"Error installing {description} requirements: {e.stderr}"
+            return False
 
     def check_dependencies(self):
         try:
-            self.update_status("Installing required packages...", 10)
+            self.update_status("Checking requirements files...", 10)
             
-            # Install packages directly
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', 
-                                'streamlit', 'fastapi', 'uvicorn', 'python-dotenv'])
-            
-            self.update_status("Checking additional dependencies...", 30)
-            
-            # Get required packages
-            required_packages = self.get_required_packages()
-            
-            # Check installed packages
-            installed_packages = {dist.metadata['Name'] for dist in distributions()}
-            
-            # Find missing packages
-            missing_packages = [pkg for pkg in required_packages if pkg.split('==')[0] not in installed_packages]
-            
-            if missing_packages:
-                self.update_status("Installing missing packages...", 50, 
-                                 f"Installing: {', '.join(missing_packages)}")
-                
-                # Install missing packages
-                try:
-                    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
-                except subprocess.CalledProcessError as e:
-                    raise Exception(f"Failed to install packages: {str(e)}")
-            
+            # Check root requirements.txt
+            if os.path.exists('requirements.txt'):
+                if not self.install_requirements('requirements.txt', 'main'):
+                    raise Exception("Failed to install main requirements")
+
+            # Check backend requirements
+            backend_req = os.path.join('backend-api', 'requirements.txt')
+            if os.path.exists(backend_req):
+                if not self.install_requirements(backend_req, 'backend'):
+                    raise Exception("Failed to install backend requirements")
+
+            # Check dashboard requirements
+            dashboard_req = os.path.join('dashboard', 'requirements.txt')
+            if os.path.exists(dashboard_req):
+                if not self.install_requirements(dashboard_req, 'dashboard'):
+                    raise Exception("Failed to install dashboard requirements")
+
             self.update_status("All dependencies installed", 70, "Starting services...")
             self.root.after(1000, self.start_services)
             
