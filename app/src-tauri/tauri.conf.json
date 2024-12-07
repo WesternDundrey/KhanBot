@@ -17,14 +17,13 @@
         "height": 800,
         "resizable": true,
         "fullscreen": false,
-        "initializationScript": "",
         "url": "index.html"
       }
     ],
     "security": {
       "csp": null
     }
-  },
+},
   "bundle": {
     "active": true,
     "targets": "all",
