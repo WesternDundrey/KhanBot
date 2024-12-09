@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 
@@ -6,48 +6,61 @@ let mainWindow;
 let backendProcess;
 let dashboardProcess;
 
-function createWindow() {
-    // Create the browser window
-    mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
-        },
-        title: 'KhanBot'
-    });
-
-    // Load the loading screen
-    mainWindow.loadFile('loading.html');
-
-    // Start the services
-    startServices();
-}
-
 async function startServices() {
     try {
         // Start backend service
         console.log('Starting backend service...');
-        backendProcess = spawn('conda', ['run', '-n', 'backend-api', 'uvicorn', 'main:app', '--reload'], {
+        backendProcess = spawn('conda', [
+            'run', 
+            '-n', 
+            'backend-api', 
+            'uvicorn', 
+            'main:app', 
+            '--reload',
+            '--host', 
+            'localhost',
+            '--port', 
+            '8000'
+        ], {
             cwd: path.join(__dirname, 'backend-api')
         });
 
+        // Wait for backend to start
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+        // Start dashboard with correct Streamlit flags
+        console.log('Starting dashboard...');
+        const streamlitEnv = {
+            ...process.env,
+            STREAMLIT_SERVER_PORT: "8501",
+            STREAMLIT_SERVER_ADDRESS: "localhost",
+            STREAMLIT_SERVER_HEADLESS: "true",
+            STREAMLIT_BROWSER_SERVER_ADDRESS: "localhost",
+            STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+        };
+
+        dashboardProcess = spawn('conda', [
+            'run',
+            '-n',
+            'dashboard',
+            'streamlit',
+            'run',
+            'main.py',
+            '--server.port=8501',
+            '--server.address=localhost',
+            '--server.headless=true'
+        ], {
+            cwd: path.join(__dirname, 'dashboard'),
+            env: streamlitEnv
+        });
+
+        // Log outputs for debugging
         backendProcess.stdout.on('data', (data) => {
             console.log(`Backend: ${data}`);
         });
 
         backendProcess.stderr.on('data', (data) => {
             console.error(`Backend Error: ${data}`);
-        });
-
-        // Wait for backend to start
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
-        // Start dashboard service
-        console.log('Starting dashboard service...');
-        dashboardProcess = spawn('conda', ['run', '-n', 'dashboard', 'streamlit', 'run', 'main.py'], {
-            cwd: path.join(__dirname, 'dashboard')
         });
 
         dashboardProcess.stdout.on('data', (data) => {
@@ -61,7 +74,7 @@ async function startServices() {
         // Wait for dashboard to start
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Load the dashboard URL
+        // Load the dashboard URL in the Electron window
         mainWindow.loadURL('http://localhost:8501');
 
     } catch (error) {
@@ -69,13 +82,24 @@ async function startServices() {
     }
 }
 
+function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        },
+        title: 'KhanBot'
+    });
+
+    mainWindow.loadFile('loading.html');
+    startServices();
+}
+
 function cleanup() {
-    if (backendProcess) {
-        backendProcess.kill();
-    }
-    if (dashboardProcess) {
-        dashboardProcess.kill();
-    }
+    if (backendProcess) backendProcess.kill();
+    if (dashboardProcess) dashboardProcess.kill();
 }
 
 app.whenReady().then(createWindow);
@@ -87,13 +111,4 @@ app.on('window-all-closed', () => {
     }
 });
 
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
-});
-
-// Handle app quit
-app.on('before-quit', () => {
-    cleanup();
-});
+app.on('before-quit', cleanup);
